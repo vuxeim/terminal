@@ -31,16 +31,22 @@ const SHELL = {
     prompt: undefined,
 }
 
+const NL = String.fromCharCode(10);
+
 const t = document.getElementById("terminal");
 
-FUN.update_prompt();
-FUN.print();
+let content_length = t.textLength;
 
 t.addEventListener("input", () => { 
     if (t.value.slice(-1).charCodeAt(0) === 10) {
-        [cmd, ...params] = t.value.split(String.fromCharCode(10)).at(-2).replace(SHELL.prompt, "").trim().split(" ").filter(Boolean);
+        [cmd, ...params] = t.value.split(NL).at(-2).replace(SHELL.prompt, "").trim().split(" ").filter(Boolean);
         (COMMAND[cmd || ""]||(() => FUN.print(`shell: command not found: ${cmd}`)))(params);
-    };
+    } else if (t.textLength < content_length && t.value.split(NL).at(-1) == SHELL.prompt) {
+        t.value = t.value.split(NL).slice(0, -1).join(NL)+(t.value.indexOf(NL) > -1 ? NL : '');
+        FUN.print();
+    }
+    content_length = t.textLength;
 });
 
-window.addEventListener('DOMContentLoaded', () => COMMAND["clear"]());
+window.addEventListener('DOMContentLoaded', () => FUN.update_prompt() && COMMAND["clear"]());
+

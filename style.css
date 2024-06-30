@@ -58,7 +58,7 @@ main {
 }
 
 .navigation {
-    overflow: scroll;
+    overflow: hidden;
 }
 
 .navigation>ul {
@@ -153,3 +153,4 @@ main {
         display: none;
     }
 }
+
