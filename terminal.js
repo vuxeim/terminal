@@ -27,7 +27,7 @@ const COMMAND = {
     ping: ([target, ..._]) => FUN.print(`pong ${target ? target : ""}`),
     color: ([code, ..._]) => (code = [...(code||"0a")].reverse().join("")) && ([t.style.color, t.style.backgroundColor] = [COLORS[code[0]], COLORS[code[1]]]) && FUN.print(),
     pwd: () => FUN.print((SHELL.path === "~") ? `/home/${SHELL.user}` : SHELL.path),
-    ls: () => FUN.print('No files yet'),
+    ls: () => FUN.print('total 0'),
     user: ([name, ..._]) => (SHELL.user = (name || SHELL.user)) && FUN.update_prompt() && FUN.print(),
     host: ([name, ..._]) => (SHELL.host = (name || SHELL.host)) && FUN.update_prompt() && FUN.print(),
     exit: () => document.getElementById("window").remove(),
