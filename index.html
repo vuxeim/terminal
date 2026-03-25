@@ -3,7 +3,6 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="style.css">
-        <link rel="stylesheet" href="links.css">
         <meta name="darkreader-lock">
         <title>$ _</title>
     </head>
@@ -14,15 +13,19 @@
                 <span>uxeim</span>
             </div>
             <nav class="navigation">
+                <details id="controls">
+                    <summary>See commands</summary>
+                    <p>Did you know that the terminal window is movable?</p>
+                </details>
             </nav>
         </aside>
         <main>
             <section class="window" id="window">
                 <div class="topbar">
                     <div class="indicators_wrapper">
-                        <div class="indicator i_red"></div>
-                        <div class="indicator i_yellow"></div>
-                        <div class="indicator i_green"></div>
+                        <div id="indicator-red" class="indicator i_red"></div>
+                        <div id="indicator-yellow" class="indicator i_yellow"></div>
+                        <div id="indicator-green" class="indicator i_green"></div>
                     </div>
                     <p class="topbar_title">vuxe.im/terminal</p>
                 </div>
@@ -30,6 +33,8 @@
             </section>
         </main>
         <script src="terminal.js"></script>
+        <script src="window.js"></script>
+        <noscript>JavaScript needs to be enabled! Though you can use curl to view my website $ curl vuxe.im/card</noscript>
     </body>
 </html>
 
