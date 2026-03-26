@@ -1,6 +1,20 @@
 const get_terminal = () => document.getElementById("terminal");
 const get_window = () => document.getElementById("window");
 
+class SOURCE {
+    static terminal_js;
+    static window_js;
+    static style_css;
+    static index_html;
+
+    static {
+        fetch('terminal.js').then(r => r.text()).then(text => this.terminal_js = text);
+        fetch('window.js').then(r => r.text()).then(text => this.window_js = text);
+        fetch('style.css').then(r => r.text()).then(text => this.style_css = text);
+        fetch('index.html').then(r => r.text()).then(text => this.index_html = text);
+    }
+}
+
 class State
 {
     #cached_terminal_element;
@@ -83,6 +97,12 @@ const FS = {
                     'terminal': 'URxvt',
                     'shell': "im using zsh",
                     'os': "im using arch btw",
+                },
+                'source': {
+                    'terminal.js': "%source::terminal.js%",
+                    'window.js': "%source::window.js%",
+                    'style.css': "%source::style.css%",
+                    'index.html': "%source::index.html%",
                 },
             },
         },
@@ -268,6 +288,13 @@ const FUN = {
     update_prompt: () => SHELL.prompt = `[${SHELL.user}@${SHELL.host} ${SHELL.path}] $`,
     keyboard_interrupt: () => FUN.print("Ctrl-C"),
     exit: () => get_window().remove(),
+    replace_special_content: (content) => {
+        content = content.replace("%source::terminal.js%", SOURCE.terminal_js);
+        content = content.replace("%source::window.js%", SOURCE.window_js);
+        content = content.replace("%source::style.css%", SOURCE.style_css);
+        content = content.replace("%source::index.html%", SOURCE.index_html);
+        return content;
+    },
     resolve_path: (path) => {
         if (path) path = path.replace(/^~/, '/home/' + SHELL.user);
         const cwd = SHELL.path.startsWith('/') ? SHELL.path : SHELL.path.replace('~', '/home/' + SHELL.user);
