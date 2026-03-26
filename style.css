@@ -19,6 +19,12 @@ body {
     cursor: pointer;
 }
 
+#controls {
+    overflow-y: auto;
+    scrollbar-width: none;
+    height: 100%;
+}
+
 main {
     display: flex;
     align-items: center;
@@ -179,10 +185,12 @@ samp {
     color: #16C60C;
     padding: 1em;
     outline: none;
-    overflow: hidden;
+    overflow-y: auto;
     white-space: pre;
     border: none;
     font-family: monospace;
+    scrollbar-width: none;
+    resize: none;
 }
 
 @media screen and (max-width: 1000px) {
