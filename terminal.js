@@ -99,13 +99,13 @@ Yb    dP 88   88 Yb  dP 888888 88 8b    d8
    YP    #YbodP' dP  Yb 888888 88 88 YY 88
 `.replaceAll('#', '`'),
     String.raw`
-:::     :::  :::    :::  :::    :::  ::::::::::  :::::::::::  ::::    ::::
-:+:     :+:  :+:    :+:  :+:    :+:  :+:             :+:      +:+:+: :+:+:+
-+:+     +:+  +:+    +:+   +:+  +:+   +:+             +:+      +:+ +:+:+ +:+
-+#+     +:+  +#+    +:+    +#++:+    +#++:++#        +#+      +#+  +:+  +#+
- +#+   +#+   +#+    +#+   +#+  +#+   +#+             +#+      +#+       +#+
-  #+#+#+#    #+#    #+#  #+#    #+#  #+#             #+#      #+#       #+#
-    ###       ########   ###    ###  ##########  ###########  ###       ###
+:::     ::: :::    ::: :::    ::: :::::::::: ::::::::::: ::::    ::::
+:+:     :+: :+:    :+: :+:    :+: :+:            :+:     +:+:+: :+:+:+
++:+     +:+ +:+    +:+  +:+  +:+  +:+            +:+     +:+ +:+:+ +:+
++#+     +:+ +#+    +:+   +#++:+   +#++:++#       +#+     +#+  +:+  +#+
+ +#+   +#+  +#+    +#+  +#+  +#+  +#+            +#+     +#+       +#+
+  #+#+#+#   #+#    #+# #+#    #+# #+#            #+#     #+#       #+#
+    ###      ########  ###    ### ########## ########### ###       ###
 `,
     String.raw`
 ██    ██ ██    ██ ██   ██ ███████ ██ ███    ███
@@ -123,21 +123,13 @@ Yb    dP 88   88 Yb  dP 888888 88 8b    d8
   ╚═══╝   ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝╚═╝     ╚═╝
 `,
     String.raw`
-                                          >>
->=>     >=> >=>  >=> >=>   >=>   >==>        >===>>=>>==>
- >=>   >=>  >=>  >=>   >> >=>  >>   >=>  >=>  >=>  >>  >=>
-  >=> >=>   >=>  >=>    >>     >>===>>=> >=>  >=>  >>  >=>
-   >=>=>    >=>  >=>  >>  >=>  >>        >=>  >=>  >>  >=>
-    >=>       >==>=> >=>   >=>  >====>   >=> >==>  >>  >=>
-`,
-    String.raw`
-                                            ##
-                                            ""
- ##m  m##  ##    ##  "##  ##"   m####m    ####     ####m##m
-  ##  ##   ##    ##    ####    ##mmmm##     ##     ## ## ##
-  "#mm#"   ##    ##    m##m    ##""""""     ##     ## ## ##
-   ####    ##mmm###   m#""#m   "##mmmm#  mmm##mmm  ## ## ##
-    ""      """" ""  """  """    """""   """"""""  "" "" ""
+                                        ##
+                                        ""
+ ##m  m## ##    ## "##  ##"  m####m   ####    ####m##m
+  ##  ##  ##    ##   ####   ##mmmm##    ##    ## ## ##
+  "#mm#"  ##    ##   m##m   ##""""""    ##    ## ## ##
+   ####   ##mmm###  m#""#m  "##mmmm# mmm##mmm ## ## ##
+    ""     """" "" """  """   """""  """""""" "" "" ""
 `,
     String.raw`
  _   __ ,   . _  .-   ___  # , _ , _
@@ -165,12 +157,78 @@ Y88b    / 888  888 Y88b  /   e88~~8e   "  888-~88e-~88e
 |  |  |  |  |_   _|  -__||  ||        |
  \___/|_____|__.__|_____||__||__|__|__|
 `,
+    String.raw`
+                                    d8b
+                                    Y8P
+
+888  888 888  888 888  888  .d88b.  888 88888b.d88b.
+888  888 888  888 #Y8bd8P' d8P  Y8b 888 888 "888 "88b
+Y88  88P 888  888   X88K   88888888 888 888  888  888
+ Y8bd8P  Y88b 888 .d8""8b. Y8b.     888 888  888  888
+  Y88P    "Y88888 888  888  "Y8888  888 888  888  888
+`.replaceAll('#', '`'),
+    String.raw`
+:::      .::. ...    :::   .,::      .: .,::::::   ::: .        :
+';;,   ,;;;'  ;;     ;;;   #;;;,  .,;;  ;;;;''''   ;;; ;;,.    ;;;
+ \[[  .[[/   [['     [[[     '[[,,[['    [[cccc    [[[ [[[[, ,[[[[,
+  Y$c.$$"    $$      $$$      Y$$$P      $$""""    $$$ $$$$$$$$"$$$
+   Y88P      88    .d888    oP"##"Yo,    888oo,__  888 888 Y88" 888o
+    MP        "YmmMMMM"" ,m"       "Mm,  """"YUMMM MMM MMM  M'  "MMM
+`.replaceAll('#', '`'),
+    String.raw`
+_  _ _  _ _  _ ____ _ _  _
+|  | |  |  \/  |___ | |\/|
+ \/  |__| _/\_ |___ | |  |
+`,
+    String.raw`
+                                              ███
+                                             ░░░
+ █████ █████ █████ ████ █████ █████  ██████  ████  █████████████
+░░███ ░░███ ░░███ ░███ ░░███ ░░███  ███░░███░░███ ░░███░░███░░███
+ ░███  ░███  ░███ ░███  ░░░█████░  ░███████  ░███  ░███ ░███ ░███
+ ░░███ ███   ░███ ░███   ███░░░███ ░███░░░   ░███  ░███ ░███ ░███
+  ░░█████    ░░████████ █████ █████░░██████  █████ █████░███ █████
+   ░░░░░      ░░░░░░░░ ░░░░░ ░░░░░  ░░░░░░  ░░░░░ ░░░░░ ░░░ ░░░░░
+`,
+    String.raw`
+ █░█ █░█ █░█ ██▀ ▀ ▄▀▄▀▄
+ ▀▄▀ ▀▄█ ▄▀▄ █▄▄ █ █░▀░█
+`,
+    String.raw`
+                                           ,,
+                                           db
+
+#7M'   #MF'#7MM  #7MM  #7M'   #MF'.gP"Ya #7MM  #7MMpMMMb.pMMMb.
+  VA   ,V    MM    MM    #VA ,V' ,M'   Yb  MM    MM    MM    MM
+   VA ,V     MM    MM      XMX   8M""""""  MM    MM    MM    MM
+    VVV      MM    MM    ,V' VA. YM.    ,  MM    MM    MM    MM
+     W       #Mbod"YML..AM.   .MA.#Mbmmd'.JMML..JMML  JMML  JMML.
+`.replaceAll('#', '`'),
+    String.raw`
+                          .__
+___  ____ _____  ___ ____ |__| _____
+\  \/ /  |  \  \/  // __ \|  |/     \
+ \   /|  |  />    <\  ___/|  |  Y Y  \
+  \_/ |____//__/\__\\____\|__|__|_|__/
+`,
+    String.raw`
+               ___
+\  / |  | \_/ |__  |  |\/|
+ \/  \__/ / \ |___ |  |  |
+`,
+    String.raw`
+                                   ||
+.... ... ... ...  ... ...   ....  ...  .. .. ..
+ '|.  |   ||  ||   '|..'  .|...||  ||   || || ||
+  '|.|    ||  ||    .|.   ||       ||   || || ||
+   '|     '|..'|. .|  ||.  '|...' .||. .|| || ||.
+`,
 ];
 
 const COMMAND_DESCRIPTIONS = {
     help: "list available commands or get command help",
     ls: "list directory content",
-    cat: "concatenate and print files content",
+    cat: "concatenate files content",
     clear: "clear screen",
     color: "change fore and background colors",
     ping: "simply respond",
@@ -188,6 +246,7 @@ const FUN = {
         FUN.clear();
         FUN.print(MOTD + "\n" + FUN.get_random_ascii());
         FUN.prompt();
+        content_length = get_terminal().textLength;
         get_terminal().focus();
         STATE.save();
     },
@@ -296,13 +355,24 @@ const COMMAND = {
             FUN.print(`${mode} ${SHELL.user} ${SHELL.group} ${("" + size).padStart(2, " ")} ${FUN.date_fmt(date)} ${parent}`);
         }
     },
-    cat: ([path, ..._]) => {
+    cat: ([path, ...rest]) => {
         if (!path) return FUN.print('cat: missing operand');
         path = FUN.resolve_path(path);
         const node = FUN.get_node(path);
-        if (node === null) return FUN.print(`cat: ${path}: No such file or directory`);
-        if (FUN.is_dir(node)) return FUN.print(`cat: ${path}: Is a directory`);
-        FUN.print(node);
+        if (node === null)
+        {
+            FUN.print(`cat: ${path}: No such file or directory`);
+        }
+        else if (FUN.is_dir(node))
+        {
+            FUN.print(`cat: ${path}: Is a directory`);
+        }
+        else
+        {
+            FUN.print(FUN.replace_special_content(node));
+        }
+        // recursively cat next path
+        if (rest.length) COMMAND.cat(rest);
     },
     user: ([name, ..._]) => (SHELL.user = (name || SHELL.user)) && FUN.update_prompt(),
     host: ([name, ..._]) => (SHELL.host = (name || SHELL.host)) && FUN.update_prompt(),
@@ -399,7 +469,10 @@ const handle_input = (e) =>
     if (get_terminal().selectionStart != get_terminal().selectionEnd || get_terminal().selectionStart != get_terminal().value.length)
     {
         STATE.reset();
-        get_terminal().value += e.data;
+        if (e.data)
+        {
+            get_terminal().value += e.data;
+        }
         STATE.save();
         return;
     }
@@ -430,6 +503,7 @@ const handle_input = (e) =>
         get_terminal().value = get_terminal().value.split(NL).slice(0, -1).join(NL)+(get_terminal().value.indexOf(NL) > -1 ? NL : '');
         FUN.prompt();
     }
+
     content_length = get_terminal()?.textLength;
     STATE.save();
 };
