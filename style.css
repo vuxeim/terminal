@@ -192,8 +192,12 @@ samp {
     
     main {
         align-items: baseline;
-        padding-top: 10vh;
         height: 100vh;
+    }
+
+    .window {
+        width: 100%;
+        height: 100%;
     }
 
     .panel {

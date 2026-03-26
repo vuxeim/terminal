@@ -409,6 +409,7 @@ const handle_input = (e) =>
     {
         [cmd, ...params] = get_terminal().value.split(NL).at(-2).replace(SHELL.prompt, "").trim().split(" ").filter(Boolean);
         if (!cmd) return COMMAND[""](params);
+        cmd = cmd.toLowerCase();
         if (Object.keys(COMMAND).includes(cmd))
         {
             COMMAND[cmd](params);
