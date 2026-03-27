@@ -123,23 +123,24 @@ samp {
     position: fixed;
 }
 
-.indicators_wrapper {
-    display: flex;
-    gap: .2em;
-    margin: 0 1em;
-    position: absolute;
-}
-
 .topbar {
     display: flex;
     background-color: #6120A2;
     align-items: center;
     height: 2.4em;
     cursor: default;
+    position: relative;
 }
 
 .topbar:active {
     cursor: grabbing;
+}
+
+.indicators_wrapper {
+    display: flex;
+    gap: .2em;
+    padding: 0 1em;
+    margin-left: auto;
 }
 
 .topbar_title {
@@ -151,6 +152,20 @@ samp {
     color: #a0a0a0;
     white-space: nowrap;
     overflow: hidden;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%);
+}
+
+.reversed {
+    direction: rtl;
+    unicode-bidi: bidi-override;
+    flex-direction: row-reverse;
+}
+
+.reversed .indicators_wrapper {
+    margin-left: 0;
+    margin-right: auto;
 }
 
 .indicator {
@@ -194,13 +209,8 @@ samp {
 }
 
 @media screen and (max-width: 1000px) {
-    body {
-        flex-direction: column;
-    }
-    
     main {
-        align-items: baseline;
-        height: 100vh;
+        height: 100svh;
     }
 
     .window {

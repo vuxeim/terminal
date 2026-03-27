@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="style.css">
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
         <meta name="darkreader-lock">
         <title>$ _</title>
     </head>
@@ -23,16 +23,17 @@
         <main>
             <section class="window" id="window">
                 <div class="topbar">
-                    <div class="indicators_wrapper">
-                        <div id="indicator-red" class="indicator i_red"></div>
-                        <div id="indicator-yellow" class="indicator i_yellow"></div>
-                        <div id="indicator-green" class="indicator i_green"></div>
-                    </div>
                     <p class="topbar_title">vuxe.im/terminal</p>
+                    <div class="indicators_wrapper">
+                        <div id="indicator-green" class="indicator i_green"></div>
+                        <div id="indicator-yellow" class="indicator i_yellow"></div>
+                        <div id="indicator-red" class="indicator i_red"></div>
+                    </div>
                 </div>
                 <textarea class="content" id="terminal" spellcheck="false"></textarea>
             </section>
         </main>
+        <script src="main.js"></script>
         <script src="terminal.js"></script>
         <script src="window.js"></script>
         <noscript>JavaScript needs to be enabled! Though you can use curl to view my website $ curl vuxe.im/card</noscript>

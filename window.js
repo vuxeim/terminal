@@ -1,6 +1,3 @@
-// get_window is accessible from terminal.js, since terminal.js is loaded first.
-//const get_window = () => document.getElementById("window");
-
 let dragging = x = y = old_x = old_y = 0;
 
 const drag = (e) => {
