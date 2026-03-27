@@ -466,10 +466,17 @@ const COMMAND = {
         const entries = Object.keys(node);
         FUN.print(`total ${entries.length}`);
         const date = new Date(2020, 11, 24, 12, 30, 0);
-        for (const [parent, child] of FUN.content_of(node)) {
-            const size = FUN.is_dir(child) ? Object.keys(child).length : child.length;
-            const mode = FUN.is_dir(child) ? 'drwxr-xr-x' : '-rw-r--r--';
-            FUN.print(`${mode} ${SHELL.user} ${SHELL.group} ${("" + size).padStart(2, " ")} ${FUN.date_fmt(date)} ${parent}`);
+
+        const node_content = FUN.content_of(node);
+        const directories = node_content.filter(([parent, child]) => FUN.is_dir(child)).sort();
+        const files = node_content.filter(([parent, child]) => !FUN.is_dir(child)).sort();
+
+        for (const [name, content] of directories.concat(files)) {
+            const size = FUN.is_dir(content) ? Object.keys(content).length : content.length;
+            const size_fmt = ("" + size).padStart(2, " ");
+            const mode = FUN.is_dir(content) ? 'drwxr-xr-x' : '-rw-r--r--';
+            const date_fmt = FUN.date_fmt(date);
+            FUN.print(`${mode} ${SHELL.user} ${SHELL.group} ${size_fmt} ${date_fmt} ${name}`);
         }
     },
     cat: ([path, ...rest]) => {
