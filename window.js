@@ -14,8 +14,6 @@ document.addEventListener("spawnterminal", () => {
     get_window().addEventListener('mousedown', drag);
 });
 
-get_window().addEventListener('mousedown', drag);
-
 document.addEventListener('mouseup', (e) => {
     dragging = false;
 });
