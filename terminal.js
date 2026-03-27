@@ -442,7 +442,7 @@ const COMMAND = {
     reverse: () => {
         const t = get_terminal();
         get_window().firstElementChild.classList.toggle("reversed"); // indicators on the right
-        get_window().firstElementChild.children[0].classList.toggle("reversed"); // flipped title
+        get_window().firstElementChild.firstElementChild.classList.toggle("reversed"); // flipped title
         t.dir = t.dir.split("").reverse().join("");
         t.scrollTop = t.scrollHeight;
     },

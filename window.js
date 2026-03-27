@@ -8,7 +8,6 @@ const drag = (e) => {
     dragging = true;
     old_x = e.clientX;
     old_y = e.clientY;
-    console.debug(1);
 };
 
 document.addEventListener("spawnterminal", () => {
