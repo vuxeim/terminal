@@ -150,7 +150,12 @@ const FUN = {
         FUN.prompt();
         TERMINAL.focus();
     },
-    print_motd: () => FUN.print(MOTD + "\n" + FUN.get_random_ascii()),
+    print_motd: () => {
+        const elements = [MOTD, FUN.get_random_ascii(), FUN.get_version()];
+        const string = elements.join(NL);
+        FUN.print(string);
+    },
+    get_version: () => VER,
     set_command_line: TERMINAL.set_command_line,
     get_command_line: () => TERMINAL.data.split(NL).at(-1).replace(SHELL.prompt, ""),
     get_command_line_start: () => TERMINAL.data.lastIndexOf(SHELL.prompt) + SHELL.prompt.length,
@@ -166,7 +171,7 @@ const FUN = {
         w.style.height = "";
         w.style.position = "fixed";
     },
-    print: (str="") => TERMINAL.append(`${str}${str ? "\n" : ""}`),
+    print: (str="") => TERMINAL.append(str+NL),
     prompt: () => { if (TERMINAL.exists) TERMINAL.append(SHELL.prompt); },
     commands_list: (delim=" ") => Object.keys(COMMAND).filter(Boolean).join(delim),
     aliases_list: (delim=" ") => Object.entries(ALIASES).map(([alias, cmd]) => `${alias}=${cmd}`).filter(Boolean).join(delim),
@@ -249,8 +254,8 @@ const COMMAND = {
         {
             const aliases = Object.entries(ALIASES).map(([alias, cmd]) => `${alias}=${cmd}`).join(" ");
             FUN.print(`Usage: help <command name>`);
-            FUN.print(`Available commands:\n${FUN.commands_list()}`);
-            FUN.print(`Aliases: ${aliases ? '\n' + aliases : 'none'}`);
+            FUN.print(`Available commands:${NL}${FUN.commands_list()}`);
+            FUN.print(`Aliases: ${aliases ? NL + aliases : 'none'}`);
         }
         else
             FUN.print(COMMAND_DESCRIPTIONS[cmd_name] ?? `help: no help for: ${cmd_name}`);
@@ -345,6 +350,7 @@ const COMMAND = {
             FUN.print('music volume <0..1|n%>');
         }
     },
+    version: () => FUN.print(FUN.get_version()),
     nav: () => {
         const nav = document.getElementById("nav");
         nav.classList.toggle('hidden');
@@ -356,7 +362,7 @@ const COMMAND = {
         get_window().firstElementChild.firstElementChild.classList.toggle("reversed"); // flipped title
         t.dir = t.dir.split("").reverse().join("");
     },
-    history: () => FUN.print(HISTORY.list().join("\n")),
+    history: () => FUN.print(HISTORY.list().join(NL)),
     ascii: ([num, ..._]) => {
         const int = parseInt(num);
         if (num && !Number.isNaN(int))
@@ -460,7 +466,7 @@ const COMMAND = {
         SLEEP.sleep(duration);
     },
     alias: ([arg, ..._]) => {
-        if (!arg) return FUN.print(FUN.aliases_list("\n"));
+        if (!arg) return FUN.print(FUN.aliases_list(NL));
         const d = arg.indexOf('=');
         if (d < 0)
         {
