@@ -6,9 +6,9 @@ class PLAYER
         'DwVTLrg-2-0.opus',
     ];
 
-    static #DIR = 'music/';
     static #audio = new Audio();
-    static #gamma = 3;
+    static #DIR = 'music/';
+    static #GAMMA = 3;
     static #ID = 'music-player';
 
     static {
@@ -102,8 +102,7 @@ class PLAYER
         }
         else
         {
-            const name = this.name.replace(this.#DIR, "");
-            const index = this.playlist.indexOf(name);
+            const index = this.playlist.indexOf(this.name);
             const next_index = (index + 1).mod(this.playlist.length);
             const next_song = this.playlist[next_index];
             this.load(next_song);
@@ -118,8 +117,7 @@ class PLAYER
         }
         else
         {
-            const name = this.name.replace(this.#DIR, "");
-            const index = this.playlist.indexOf(name);
+            const index = this.playlist.indexOf(this.name);
             const prev_index = (index - 1).mod(this.playlist.length);
             const prev_song = this.playlist[prev_index];
             this.load(prev_song);
@@ -132,16 +130,18 @@ class PLAYER
     }
 
     static stop() {
-        this.#audio.src = "";
+        this.#audio.pause();
+        this.#audio.currentTime = 0;
+        this.#audio.removeAttribute("src");
     }
 
     static #scaledVolume(x, gamma) {
-        gamma ??= this.#gamma;
+        gamma ??= this.#GAMMA;
         return Math.pow(x, gamma);
     }
 
     static #linearVolume(y, gamma) {
-        gamma ??= this.#gamma;
+        gamma ??= this.#GAMMA;
         return Math.pow(y, 1 / gamma);
     }
     

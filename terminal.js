@@ -8,7 +8,9 @@ class DYN {
         fetch('style.css').then(r => r.text()).then(t => this.SOURCE.style_css = t);
         fetch('index.html').then(r => r.text()).then(t => this.SOURCE.index_html = t);
 
-        fetch('/api/ip').then(r => r.status === 200 ? r.text() : "127.0.0.1").then(t => this.INFO.ip = t);
+        this.INFO.ip = "127.0.0.1";
+        if (!["localhost", "127.0.0.1"].includes(window.location.hostname))
+            fetch('/api/ip').then(r => r.text()).then(t => this.INFO.ip = t.trim());
         this.INFO.useragent = navigator.userAgent;
         this.INFO.platform = navigator.platform;
         this.INFO.language = navigator.language;
