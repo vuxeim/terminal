@@ -4,6 +4,7 @@ const SOURCE_FILES = [
 
     'js/window.js', 'js/controls.js', 'js/filesystem.js', 'js/music.js',
     'js/splash.js', 'js/constants.js', 'js/main.js', 'js/terminal.js',
+    'js/history.js', 'js/shell.js',
 ];
 
 const __FILESYSTEM_SOURCE_OBJECT = {};

@@ -28,6 +28,10 @@ Number.prototype.mod = function(n) {
   return ((this % n) + n) % n;
 };
 
+String.prototype.reversed = function() {
+    return [...this].reverse().join("");
+};
+
 const get_terminal = () => document.getElementById("terminal");
 const get_window = () => document.getElementById("window");
 

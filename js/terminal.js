@@ -1,5 +1,7 @@
 class DYN
 {
+    /* Stores dynamic data. Fetched asynchronously but without the need for async/await. */
+
     static SOURCE = {};
     static INFO = {};
 
@@ -20,98 +22,112 @@ class DYN
     }
 }
 
-class HISTORY
+class SLEEP
 {
-    static #index = 0;
-    static #registry = [""];
+    static get sleeping() {
+        return !!this.#timeout;
+    }
 
-    static debug() { return `[|${this.#registry.join("|")}|] << ${this.#index} (${this.get()})`; }
-    static list() { return this.#registry.slice(0, -1); }
-    static get size() { return this.#registry.length; }
-    static reset() { this.#index = 0; }
-    static clear() {
-        this.reset();
-        this.#registry.splice(0, this.size - 1);
+    static #timeout;
+    static #cleanup;
+    static #cachedPromptFunction;
+
+    static wakeup() {
+        clearTimeout(this.#timeout);
+        this.#cleanup();
     }
-    static push(full_command) {
-        this.reset();
-        if (this.seek(1) !== full_command)
-        {
-            this.#registry.splice(-1, 0, full_command);
-        }
-    }
-    static seek(offset=0) { return this.#registry.at(-1 -(offset + this.#index).clamp(0, this.size - 1)); }
-    static get(offset=0) {
-        this.#index += offset;
-        this.#index = this.#index.clamp(0, this.size - 1);
-        return this.#registry.at(-1 - this.#index) ?? "";
-    }
-    static older() {
-        return this.get(1);
-    }
-    static newer() {
-        return this.get(-1);
+
+    static sleep(duration) {
+
+        const t = get_terminal();
+        t.readOnly = true;
+
+        this.#cachedPromptFunction = FUN.prompt;
+        FUN.prompt = Function.prototype;
+
+        this.#cleanup = () => {
+            t.readOnly = false;
+            TERMINAL.focus();
+            FUN.prompt = this.#cachedPromptFunction;
+            FUN.prompt();
+            this.#cachedPromptFunction = null;
+            this.#timeout = null;
+            this.#cleanup = null;
+        };
+
+        this.#timeout = setTimeout(this.#cleanup, duration*1000);
     }
 }
 
-class STATE
+class TERMINAL
 {
-    static sleepTimeout;
-    static sleepCleanup;
-    static cachedPromptFunction;
-
     static #cached_terminal_element;
     static #terminal_parent;
     static #terminal_next_sibling;
-    static #selectionStart;
-    static #selectionEnd;
-    static #data;
-    static #content_length;
+
+    static get data() {
+        return get_terminal().value;
+    }
+
+    static get exists() {
+        return get_terminal() !== null;
+    }
 
     static get content_length() {
-        return this.#content_length;
+        return get_terminal().textLength;
     }
 
-    static save = () => {
+    static get cursor_position() {
+        return get_terminal().selectionStart;
+    }
+
+    static get selected() {
         const t = get_terminal();
-        if (!t) return;
-        this.#data = t.value;
-        this.#selectionStart = t.selectionStart;
-        this.#selectionEnd = t.selectionEnd;
-        this.#content_length = t.textLength;
+        return t.selectionStart !== t.selectionEnd;
     }
 
-    static reset = () => {
-        const term = get_terminal();
-        term.value = this.#data;
-        term.selectionStart = this.#selectionStart;
-        term.selectionEnd = this.#selectionEnd;
+    static append(text) {
+        get_terminal().value += text;
     }
 
-    static clear = () => {
-        const term = get_terminal();
-        term.value = "";
-        term.selectionStart = 0;
-        term.selectionEnd = 0;
-        this.save();
+    static scroll_bottom() {
+        const t = get_terminal();
+        t.scrollTop = t.scrollHeight;
     }
 
-    static respawn = (initial=false) => {
+    static focus() {
+        get_terminal().focus();
+    }
+
+    static clear() {
+        const t = get_terminal();
+        t.value = "";
+        t.selectionStart = 0;
+        t.selectionEnd = 0;
+    }
+
+    static set_command_line(full_command) {
+        const t = get_terminal();
+        const value = t.value;
+        const prompt_start = value.lastIndexOf(SHELL.prompt);
+        const prompt_with_command_line = SHELL.prompt + full_command;
+        t.value = value.insert(prompt_start, Infinity, prompt_with_command_line);
+    }
+
+    static respawn(initial=false) {
         if (!initial)
             this.#terminal_parent.insertBefore(this.#cached_terminal_element, this.#terminal_next_sibling);
 
         document.dispatchEvent(new CustomEvent("spawnterminal"));
 
-        get_terminal().addEventListener('input', handle_input);
+        get_terminal().addEventListener('beforeinput', handle_beforeinput);
         get_terminal().addEventListener('keydown', handle_keydown);
         get_terminal().dir = "ltr";
         get_terminal().autocorrect = false;
         get_terminal().spellcheck = false;
-        document.getElementById("indicator-red").addEventListener('click', COMMAND.exit);
+        document.getElementById("indicator-red").addEventListener('click', FUN.exit);
         document.getElementById("indicator-yellow").addEventListener('click', FUN.maximize);
         document.getElementById("indicator-green").addEventListener('click', FUN.floating);
-
-        this.save();
     }
 
     static {
@@ -119,10 +135,6 @@ class STATE
         this.#cached_terminal_element = w.cloneNode(true);
         this.#terminal_parent = w.parentNode;
         this.#terminal_next_sibling = w.nextSibling;
-        this.#selectionStart = 0;
-        this.#selectionEnd = 0;
-        this.#data = "";
-        this.#content_length = 0;
     }
 };
 
@@ -134,18 +146,14 @@ const FUN = {
         SHELL.path = '~';
         FUN.update_prompt();
         FUN.clear();
-        FUN.print(MOTD + "\n" + FUN.get_random_ascii());
+        FUN.print_motd();
         FUN.prompt();
-        get_terminal().focus();
-        STATE.save();
+        TERMINAL.focus();
     },
-    set_command_line: (full_command) => {
-        const t = get_terminal();
-        t.value = t.value.insert(t.value.lastIndexOf(SHELL.prompt), Infinity, `${SHELL.prompt} ${full_command}`);
-        STATE.save();
-    },
-    get_command_line: () => get_terminal().value.split(NL).at(-1).replace(SHELL.prompt + " ", ""),
-    get_prompt_end: () => get_terminal().value.lastIndexOf(SHELL.prompt) + SHELL.prompt.length + 1,
+    print_motd: () => FUN.print(MOTD + "\n" + FUN.get_random_ascii()),
+    set_command_line: TERMINAL.set_command_line,
+    get_command_line: () => TERMINAL.data.split(NL).at(-1).replace(SHELL.prompt, ""),
+    get_command_line_start: () => TERMINAL.data.lastIndexOf(SHELL.prompt) + SHELL.prompt.length,
     maximize: () => {
         const w = get_window();
         w.style.width = "100%";
@@ -158,18 +166,17 @@ const FUN = {
         w.style.height = "";
         w.style.position = "fixed";
     },
-    print: (str="") => get_terminal().value += `${str}${str ? "\n" : ""}`,
-    prompt: () => get_terminal() ? get_terminal().value += `${SHELL.prompt} ` : {},
+    print: (str="") => TERMINAL.append(`${str}${str ? "\n" : ""}`),
+    prompt: () => { if (TERMINAL.exists) TERMINAL.append(SHELL.prompt); },
     commands_list: (delim=" ") => Object.keys(COMMAND).filter(Boolean).join(delim),
     aliases_list: (delim=" ") => Object.entries(ALIASES).map(([alias, cmd]) => `${alias}=${cmd}`).filter(Boolean).join(delim),
     content_of: (obj) => Object.entries(obj),
-    update_prompt: () => SHELL.prompt = `[${SHELL.user}@${SHELL.host} ${SHELL.path}] $`,
+    update_prompt: () => SHELL.prompt = `[${SHELL.user}@${SHELL.host} ${SHELL.path}] $ `,
     keyboard_interrupt: () => {
         FUN.print("^C");
-        if (STATE.sleepTimeout)
+        if (SLEEP.sleeping)
         {
-            clearTimeout(STATE.sleepTimeout);
-            STATE.sleepCleanup();
+            SLEEP.wakeup();
         }
     },
     exit: () => {
@@ -201,13 +208,11 @@ const FUN = {
         }
         return '/' + resolved.join('/');
     },
-    clear: () => {
-        STATE.clear();
-    },
+    clear: TERMINAL.clear,
     spawn: () => {
-        if (get_terminal())
+        if (TERMINAL.exists)
             return;
-        STATE.respawn();
+        TERMINAL.respawn();
         FUN.load();
     },
     exec: (text="") => {
@@ -250,14 +255,12 @@ const COMMAND = {
         else
             FUN.print(COMMAND_DESCRIPTIONS[cmd_name] ?? `help: no help for: ${cmd_name}`);
     },
-    "": () => get_terminal().value = get_terminal().value.slice(0, -1).trim()+" ",
     music: ([subcommand, ...args]) => {
         const prefix = "~ᴘʟᴀʏᴇʀ~";
 
         if (subcommand === 'load')
         {
             let name = args.shift();
-            if (!name) name = PLAYER.playlist.random();
             PLAYER.load(name);
             FUN.print(`${prefix} Loaded: ${PLAYER.name}`);
         }
@@ -344,7 +347,6 @@ const COMMAND = {
         get_window().firstElementChild.classList.toggle("reversed"); // indicators on the right
         get_window().firstElementChild.firstElementChild.classList.toggle("reversed"); // flipped title
         t.dir = t.dir.split("").reverse().join("");
-        t.scrollTop = t.scrollHeight;
     },
     history: () => FUN.print(HISTORY.list().join("\n")),
     ascii: ([num, ..._]) => {
@@ -357,7 +359,11 @@ const COMMAND = {
     },
     ping: ([target, ..._]) => FUN.print(`pong ${target ? target : ""}`),
     clear: FUN.clear,
-    color: ([code, ..._]) => (code = [...(code||"0a")].reverse().join("")) && ([get_terminal().style.color, get_terminal().style.backgroundColor] = [COLORS[code[0]], COLORS[code[1]]]),
+    color: ([code = "0a", ..._]) => {
+        const [fore, back] = code.reversed();
+        const t = get_terminal();
+        [t.style.color, t.style.backgroundColor] = [COLORS[fore], COLORS[back]];
+    },
     pwd: () => FUN.print(FUN.resolve_path(SHELL.path)),
     ls: ([path, ..._]) => {
         path = FUN.resolve_path(path);
@@ -433,30 +439,22 @@ const COMMAND = {
     echo: ([...args]) => (FUN.print(args.join(" "))),
     exit: FUN.exit,
     sleep: ([duration, ...args]) => {
+
         duration = parseFloat(duration) || 1;
+
         if (args.includes("--hard"))
         {
             const end = Date.now() + duration * 1000;
             while (Date.now() < end);
             return;
         }
-        get_terminal().readOnly = true;
-        STATE.cachedPromptFunction = FUN.prompt;
-        FUN.prompt = Function.prototype;
-        STATE.sleepCleanup = () => {
-            get_terminal().readOnly = false;
-            get_terminal().focus();
-            FUN.prompt = STATE.cachedPromptFunction;
-            FUN.prompt();
-            STATE.cachedPromptFunction = null;
-            STATE.sleepTimeout = null;
-            STATE.sleepCleanup = null;
-        };
-        STATE.sleepTimeout = setTimeout(STATE.sleepCleanup, duration*1000);
+
+        SLEEP.sleep(duration);
     },
     alias: ([arg, ..._]) => {
         if (!arg) return FUN.print(FUN.aliases_list("\n"));
-        if ((d = arg.indexOf('=')) < 0)
+        const d = arg.indexOf('=');
+        if (d < 0)
         {
             if (Object.keys(ALIASES).includes(arg))
             {
@@ -472,17 +470,9 @@ const COMMAND = {
     },
 }
 
-const SHELL = {
-    user: "user",
-    host: "machine",
-    path: "~",
-    group: "group",
-    prompt: undefined,
-}
-
 const CTRL_HANDLERS = {
     c: FUN.keyboard_interrupt,
-    d: COMMAND.exit,
+    d: FUN.exit,
     l: FUN.clear,
     e: FUN.spawn,
 };
@@ -498,50 +488,48 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-const handle_input = (e) =>
+const handle_beforeinput = (e) =>
 {
-    // when editing outside the command line or something is selected
-    if (get_terminal().selectionStart != get_terminal().selectionEnd
-        || get_terminal().selectionStart <= FUN.get_prompt_end())
+    const before_command_line = TERMINAL.cursor_position < FUN.get_command_line_start();
+    const at_command_line_start = TERMINAL.cursor_position === FUN.get_command_line_start();
+    const at_command_line_end = TERMINAL.cursor_position === TERMINAL.content_length;
+    const is_backspace = e.inputType === 'deleteContentBackward';
+    const is_enter = e.inputType === 'insertLineBreak';
+    const is_printable = !!e.data;
+
+    if (before_command_line || (is_backspace && at_command_line_start))
     {
-        STATE.reset();
-        if (e.data)
-        {
-            get_terminal().value += e.data;
-        }
-        STATE.save();
+        e.preventDefault();
+        if (is_printable) TERMINAL.append(e.data);
         return;
     }
 
-    // enter (new line)
-    if (get_terminal().value.slice(-1).charCodeAt(0) === 10)
+    // enter (new line) at the end of command line
+    if (is_enter && at_command_line_end)
     {
-        [cmd, ...params] = get_terminal().value.split(NL).at(-2).replace(SHELL.prompt, "").trim().split(" ").filter(Boolean);
-        if (!cmd) return COMMAND[""](params);
-        HISTORY.push([cmd, ...params].join(" "));
-        cmd = cmd.toLowerCase();
-        if (Object.keys(COMMAND).includes(cmd))
-        {
-            COMMAND[cmd](params);
-        }
-        else if (Object.keys(ALIASES).includes(cmd))
-        {
-            FUN.exec(`${ALIASES[cmd]} ${params.join(" ")}`);
-        }
-        else
-        {
-            FUN.print(`shell: command not found: ${cmd}`);
-        }
-        FUN.prompt();
-    }
-    // backspace
-    else if (get_terminal().textLength < STATE.content_length && get_terminal().value.split(NL).at(-1) === SHELL.prompt)
-    {
-        get_terminal().value = get_terminal().value.split(NL).slice(0, -1).join(NL)+(get_terminal().value.indexOf(NL) > -1 ? NL : '');
-        FUN.prompt();
-    }
+        e.preventDefault();
+        const command_line = FUN.get_command_line();
+        TERMINAL.append(NL);
 
-    STATE.save();
+        const [cmd, ...params] = command_line.trim().split(" ").filter(Boolean);
+
+        if (cmd)
+        {
+            const cmd_lower = cmd.toLowerCase();
+            HISTORY.push([cmd, ...params].join(" "));
+
+            if (Object.keys(COMMAND).includes(cmd_lower))
+                COMMAND[cmd_lower](params);
+            else if (Object.keys(ALIASES).includes(cmd_lower))
+                FUN.exec(`${ALIASES[cmd_lower]} ${params.join(" ")}`);
+            else
+                FUN.print(`shell: command not found: ${cmd}`);
+        }
+
+        FUN.prompt();
+        TERMINAL.scroll_bottom();
+        return;
+    }
 };
 
 const handle_keydown = (e) => {
@@ -550,6 +538,11 @@ const handle_keydown = (e) => {
         e.preventDefault();
         FUN.set_command_line(HISTORY.older());
     }
+    else if (e.key === "Tab")
+    {
+        e.preventDefault();
+        // TODO tab completion
+    }
     else if (e.key === "ArrowDown")
     {
         e.preventDefault();
@@ -557,7 +550,8 @@ const handle_keydown = (e) => {
     }
     else if (e.key === "ArrowLeft")
     {
-        if (get_terminal().selectionStart <= FUN.get_prompt_end())
+        // stop at the end of prompt when approaching from the right but allow anywhere else
+        if (TERMINAL.cursor_position === FUN.get_command_line_start())
         {
             e.preventDefault();
         }
@@ -565,5 +559,5 @@ const handle_keydown = (e) => {
 };
 
 window.addEventListener('DOMContentLoaded', FUN.load);
-STATE.respawn(true);
+TERMINAL.respawn(true);
 

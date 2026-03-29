@@ -144,6 +144,5 @@ class PLAYER
         gamma ??= this.#GAMMA;
         return Math.pow(y, 1 / gamma);
     }
-    
 }
 
