@@ -305,6 +305,95 @@ const COMMAND = {
             FUN.print(COMMAND_DESCRIPTIONS[cmd_name] ?? `help: no help for: ${cmd_name}`);
     },
     "": () => get_terminal().value = get_terminal().value.slice(0, -1).trim()+" ",
+    music: ([subcommand, ...args]) => {
+        const prefix = "~ᴘʟᴀʏᴇʀ~";
+
+        if (subcommand === 'load')
+        {
+            let name = args.shift();
+            if (!name) name = PLAYER.playlist.random();
+            PLAYER.load(name);
+            FUN.print(`${prefix} Loaded: ${PLAYER.name}`);
+        }
+        else if (subcommand === 'play')
+        {
+            PLAYER.play();
+            FUN.print(`${prefix} Playing: ${PLAYER.name}`);
+        }
+        else if (subcommand === 'next')
+        {
+            PLAYER.next();
+            FUN.print(`${prefix} Playing: ${PLAYER.name}`);
+        }
+        else if (subcommand === 'prev')
+        {
+            PLAYER.prev();
+            FUN.print(`${prefix} Playing: ${PLAYER.name}`);
+        }
+        else if (subcommand === 'pause')
+        {
+            PLAYER.pause();
+            FUN.print(`${prefix} Paused: ${PLAYER.name}`);
+        }
+        else if (subcommand === 'stop')
+        {
+            const name = PLAYER.name;
+            PLAYER.stop();
+            FUN.print(`${prefix} Stopped: ${name}`);
+        }
+        else if (subcommand === 'volume')
+        {
+            const volume = parseFloat(args.shift());
+            if (!Number.isNaN(volume))
+            {
+                PLAYER.volume = volume;
+            }
+            FUN.print(`${prefix} Volume: ${PLAYER.volume} (${PLAYER.volumeReal})`);
+        }
+        else if (subcommand === 'show')
+        {
+            if (PLAYER.hidden)
+            {
+                FUN.print("Shown!")
+                PLAYER.show();
+            }
+            else
+                FUN.print("Already shown...")
+        }
+        else if (subcommand === 'hide')
+        {
+            if (PLAYER.hidden)
+                FUN.print("Already hidden...")
+            else
+            {
+                FUN.print("Hidden!")
+                PLAYER.hide();
+            }
+        }
+        else if (subcommand === 'mute')
+        {
+            PLAYER.mute = !PLAYER.mute;
+            FUN.print(`${prefix} ${PLAYER.mute ? "Muted!" : "Unmuted!"}`);
+        }
+        else
+        {
+            FUN.print('music load <name>');
+            FUN.print('music play');
+            FUN.print('music pause');
+            FUN.print('music stop');
+            FUN.print('music next');
+            FUN.print('music prev');
+            FUN.print('music mute');
+            FUN.print('music show');
+            FUN.print('music hide');
+            FUN.print('music volume <0..1>');
+        }
+    },
+    nav: () => {
+        const nav = document.getElementById("nav");
+        nav.classList.toggle('hidden');
+        FUN.print(nav.classList.contains('hidden') ? "Hidden!" : "Shown!");
+    },
     reverse: () => {
         const t = get_terminal();
         get_window().firstElementChild.classList.toggle("reversed"); // indicators on the right
