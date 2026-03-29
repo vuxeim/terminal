@@ -295,7 +295,9 @@ const COMMAND = {
             const raw = args.shift() ?? '';
             const in_percent = raw.endsWith('%');
             const volume = parseFloat(raw) / (in_percent ? 100 : 1);
-            if (!Number.isNaN(volume)) PLAYER.volume = volume;
+            const is_relative = raw.startsWith('+') || raw.startsWith('-');
+            if (!Number.isNaN(volume))
+                PLAYER.volume = is_relative ? PLAYER.volume + volume : volume;
             FUN.print(`${prefix} Volume: ${PLAYER.volume} (${PLAYER.volumeReal})`);
         }
         else if (subcommand === 'show')
@@ -323,6 +325,11 @@ const COMMAND = {
             PLAYER.mute = !PLAYER.mute;
             FUN.print(`${prefix} ${PLAYER.mute ? "Muted!" : "Unmuted!"}`);
         }
+        else if (subcommand === 'loop')
+        {
+            PLAYER.loop = !PLAYER.loop;
+            FUN.print(`${prefix} Loop ${PLAYER.loop ? "on" : "off"}`);
+        }
         else
         {
             FUN.print('music load <name>');
@@ -334,7 +341,8 @@ const COMMAND = {
             FUN.print('music mute');
             FUN.print('music show');
             FUN.print('music hide');
-            FUN.print('music volume <0..1>');
+            FUN.print('music loop');
+            FUN.print('music volume <0..1|n%>');
         }
     },
     nav: () => {

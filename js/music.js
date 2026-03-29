@@ -1,15 +1,16 @@
 class PLAYER
 {
-    static playlist = [
+    static #playlist = [
         'BQWc_MgcT0A.opus',
         '4X7ZvpwBiKA.opus',
         'DwVTLrg-2-0.opus',
     ];
 
-    static #audio = new Audio();
     static #DIR = 'music/';
     static #GAMMA = 3;
     static #ID = 'music-player';
+    static #audio = new Audio();
+    static #autonext = true;
 
     static {
         this.#audio.volume = this.#scaledVolume(0.35);
@@ -17,6 +18,9 @@ class PLAYER
         this.#audio.autoplay = false;
         this.#audio.id = this.#ID;
         this.#audio.classList.add('hidden');
+        this.#audio.addEventListener('ended', () => {
+            if (!this.loop && this.#autonext) this.next();
+        });
     }
     
     static show() {
@@ -41,6 +45,22 @@ class PLAYER
         }
 
         player?.classList.remove('hidden');
+    }
+
+    static get loop() {
+        return this.#audio.loop;
+    }
+
+    static set loop(value) {
+        this.#audio.loop = value;
+    }
+
+    static get autonext() {
+        return this.#autonext;
+    }
+
+    static set autonext(value) {
+        this.#autonext = value;
     }
 
     static hide() {
@@ -84,13 +104,14 @@ class PLAYER
 
     static load(name) {
         this.stop();
+        if (!name) name = PLAYER.#playlist.random();
         const full_name = this.#DIR + name;
         this.#audio.src = full_name;
     }
 
     static play() {
         if (!this.name)
-            this.load(this.playlist.random());
+            this.load(this.#playlist.random());
         if (this.#audio.paused)
             this.#audio.play();
     }
@@ -98,13 +119,13 @@ class PLAYER
     static next() {
         if (!this.name)
         {
-            this.load(this.playlist.random());
+            this.load(this.#playlist.random());
         }
         else
         {
-            const index = this.playlist.indexOf(this.name);
-            const next_index = (index + 1).mod(this.playlist.length);
-            const next_song = this.playlist[next_index];
+            const index = this.#playlist.indexOf(this.name);
+            const next_index = (index + 1).mod(this.#playlist.length);
+            const next_song = this.#playlist[next_index];
             this.load(next_song);
         }
         this.#audio.play();
@@ -113,13 +134,13 @@ class PLAYER
     static prev() {
         if (!this.name)
         {
-            this.load(this.playlist.random());
+            this.load(this.#playlist.random());
         }
         else
         {
-            const index = this.playlist.indexOf(this.name);
-            const prev_index = (index - 1).mod(this.playlist.length);
-            const prev_song = this.playlist[prev_index];
+            const index = this.#playlist.indexOf(this.name);
+            const prev_index = (index - 1).mod(this.#playlist.length);
+            const prev_song = this.#playlist[prev_index];
             this.load(prev_song);
         }
         this.#audio.play();
