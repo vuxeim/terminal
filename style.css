@@ -208,9 +208,13 @@ samp {
     resize: none;
 }
 
+.hidden {
+    display: none;
+}
+
 @media screen and (max-width: 1000px) {
     main {
-        height: 100svh;
+        height: 100dvh;
     }
 
     .window {

@@ -20,6 +20,14 @@ String.prototype.replaceLast = function(what, replacement="") {
     return this.slice(0, idx) + replacement + this.slice(idx + what.length);
 };
 
+Array.prototype.random = function() {
+    return this[Math.floor(Math.random() * this.length)];
+};
+
+Number.prototype.mod = function(n) {
+  return ((this % n) + n) % n;
+};
+
 const get_terminal = () => document.getElementById("terminal");
 const get_window = () => document.getElementById("window");
 

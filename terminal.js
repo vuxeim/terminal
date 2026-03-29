@@ -315,7 +315,7 @@ const COMMAND = {
     history: () => FUN.print(HISTORY.list().join("\n")),
     ascii: ([num, ..._]) => {
         const int = parseInt(num);
-        if (num && int !== NaN)
+        if (num && !Number.isNaN(int))
             FUN.print(SPLASH[int % SPLASH.length]);
         else
             FUN.print(FUN.get_random_ascii());
