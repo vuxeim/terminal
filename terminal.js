@@ -7,6 +7,8 @@ class DYN {
         fetch('window.js').then(r => r.text()).then(t => this.SOURCE.window_js = t);
         fetch('style.css').then(r => r.text()).then(t => this.SOURCE.style_css = t);
         fetch('index.html').then(r => r.text()).then(t => this.SOURCE.index_html = t);
+
+        fetch('/api/ip').then(r => r.status === 200 ? r.text() : "127.0.0.1").then(t => this.INFO.ip = t);
         this.INFO.useragent = navigator.userAgent;
         this.INFO.platform = navigator.platform;
         this.INFO.language = navigator.language;
@@ -150,6 +152,7 @@ const FS = {
                     'resolution': "%info::resolution%",
                     'colordepth': "%info::colordepth%",
                     'timezone': "%info::timezone%",
+                    'ip': "%info::ip%",
                 },
             },
         },
@@ -233,6 +236,7 @@ const FUN = {
         content = content.replace("%info::resolution%", DYN.INFO.resolution);
         content = content.replace("%info::colordepth%", DYN.INFO.colordepth);
         content = content.replace("%info::timezone%", DYN.INFO.timezone);
+        content = content.replace("%info::ip%", DYN.INFO.ip);
 
         content = content.replace("%source::window.js%", DYN.SOURCE.window_js);
         content = content.replace("%source::style.css%", DYN.SOURCE.style_css);

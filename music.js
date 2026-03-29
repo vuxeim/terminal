@@ -58,7 +58,7 @@ class PLAYER
     static get name() {
         const src = this.#audio.src;
         if (!src) return "";
-        return new URL(this.#audio.src).pathname.replace('/', '').replace(this.#DIR, '');
+        return new URL(this.#audio.src).pathname.split('/').pop();
     }
 
     static get mute() {
