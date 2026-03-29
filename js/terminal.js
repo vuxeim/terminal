@@ -1,12 +1,12 @@
-class DYN {
+class DYN
+{
     static SOURCE = {};
     static INFO = {};
 
     static {
-        fetch('terminal.js').then(r => r.text()).then(t => this.SOURCE.terminal_js = t);
-        fetch('window.js').then(r => r.text()).then(t => this.SOURCE.window_js = t);
-        fetch('style.css').then(r => r.text()).then(t => this.SOURCE.style_css = t);
-        fetch('index.html').then(r => r.text()).then(t => this.SOURCE.index_html = t);
+        SOURCE_FILES.forEach((file) => {
+            fetch(file).then(r => r.text()).then(t => this.SOURCE[file] = t);
+        });
 
         this.INFO.ip = "127.0.0.1";
         if (!["localhost", "127.0.0.1"].includes(window.location.hostname))
@@ -20,7 +20,8 @@ class DYN {
     }
 }
 
-class HISTORY {
+class HISTORY
+{
     static #index = 0;
     static #registry = [""];
 
@@ -55,23 +56,29 @@ class HISTORY {
 
 class STATE
 {
+    static sleepTimeout;
+    static sleepCleanup;
+    static cachedPromptFunction;
+
     static #cached_terminal_element;
     static #terminal_parent;
     static #terminal_next_sibling;
     static #selectionStart;
     static #selectionEnd;
     static #data;
+    static #content_length;
 
-    static sleepTimeout;
-    static sleepCleanup;
-    static cachedPromptFunction;
+    static get content_length() {
+        return this.#content_length;
+    }
 
     static save = () => {
-        if (!get_terminal())
-            return;
-        this.#data = get_terminal().value;
-        this.#selectionStart = get_terminal().selectionStart;
-        this.#selectionEnd = get_terminal().selectionEnd;
+        const t = get_terminal();
+        if (!t) return;
+        this.#data = t.value;
+        this.#selectionStart = t.selectionStart;
+        this.#selectionEnd = t.selectionEnd;
+        this.#content_length = t.textLength;
     }
 
     static reset = () => {
@@ -108,77 +115,18 @@ class STATE
     }
 
     static {
-        this.#cached_terminal_element = get_window().cloneNode(true);
-        this.#terminal_parent = get_window().parentNode;
-        this.#terminal_next_sibling = get_window().nextSibling;
+        const w = get_window();
+        this.#cached_terminal_element = w.cloneNode(true);
+        this.#terminal_parent = w.parentNode;
+        this.#terminal_next_sibling = w.nextSibling;
         this.#selectionStart = 0;
         this.#selectionEnd = 0;
         this.#data = "";
+        this.#content_length = 0;
     }
 };
 
-const NL = String.fromCharCode(10);
-
-const COLORS = {
-    0: "#0C0C0C", 1: "#0037DA", 2: "#13A10E", 3: "#3A96DD",
-    4: "#C50F1F", 5: "#881798", 6: "#C19C00", 7: "#CCCCCC",
-    8: "#767676", 9: "#3B78FF", a: "#16C60C", b: "#61D6D6",
-    c: "#E74856", d: "#B4009E", e: "#F9F1A5", f: "#F2F2F2",
-}
-
-const FS = {
-    '/': {
-        'home': {
-            'user': {
-                'github': "vuxeim",
-                'projects': { 'terminal': 'this site github/terminal',
-                    'sheltero': 'textual game github/sheltero',
-                    'vodo': 'textual todo app github/vodo',
-                },
-                'software': {
-                    'browser': 'librewolf',
-                    'terminal': 'URxvt',
-                    'shell': "im using zsh",
-                    'os': "im using arch btw",
-                },
-                'source': {
-                    'terminal.js': "%source::terminal.js%",
-                    'window.js': "%source::window.js%",
-                    'style.css': "%source::style.css%",
-                    'index.html': "%source::index.html%",
-                },
-                'info': {
-                    'useragent': "%info::useragent%",
-                    'platform': "%info::platform%",
-                    'language': "%info::language%",
-                    'resolution': "%info::resolution%",
-                    'colordepth': "%info::colordepth%",
-                    'timezone': "%info::timezone%",
-                    'ip': "%info::ip%",
-                },
-            },
-        },
-    }, 
-};
-
 const MOTD = '>  Hello! Use \'help\' command!  < ';
-
-const COMMAND_DESCRIPTIONS = {
-    help: "list available commands or get command help",
-    su: "switch user",
-    hostname: "change hostname",
-    ls: "list directory content",
-    cat: "concatenate files content",
-    clear: "clear screen",
-    color: "change fore and background colors",
-    ping: "simply respond",
-    pwd: "print current working directory",
-    sleep: "do nothing",
-    alias: "manage command aliases",
-    ascii: "print ascii art",
-    reverse: "turn reality around",
-    history: "command history",
-};
 
 const FUN = {
     get_random_ascii: () => SPLASH[Math.floor(Math.random()*SPLASH.length)],
@@ -188,7 +136,6 @@ const FUN = {
         FUN.clear();
         FUN.print(MOTD + "\n" + FUN.get_random_ascii());
         FUN.prompt();
-        content_length = get_terminal().textLength;
         get_terminal().focus();
         STATE.save();
     },
@@ -233,20 +180,12 @@ const FUN = {
         if ((content.split('%').length !== 3) || !content.startsWith('%') || !content.endsWith('%'))
             return content;
 
-        content = content.replace("%info::useragent%", DYN.INFO.useragent);
-        content = content.replace("%info::platform%", DYN.INFO.platform);
-        content = content.replace("%info::language%", DYN.INFO.language);
-        content = content.replace("%info::resolution%", DYN.INFO.resolution);
-        content = content.replace("%info::colordepth%", DYN.INFO.colordepth);
-        content = content.replace("%info::timezone%", DYN.INFO.timezone);
-        content = content.replace("%info::ip%", DYN.INFO.ip);
+        const key = content.slice(1, -1);
+        const [type, value] = key.split('::');
 
-        content = content.replace("%source::window.js%", DYN.SOURCE.window_js);
-        content = content.replace("%source::style.css%", DYN.SOURCE.style_css);
-        content = content.replace("%source::index.html%", DYN.SOURCE.index_html);
-        // replacing terminal.js should happen last
-        // if other file contains string %source::XYZ% - things will break
-        content = content.replace("%source::terminal.js%", DYN.SOURCE.terminal_js);
+        if (type === 'info') return DYN.INFO[value] ?? content;
+        if (type === 'source') return DYN.SOURCE[value] ?? content;
+
         return content;
     },
     resolve_path: (path) => {
@@ -541,30 +480,12 @@ const SHELL = {
     prompt: undefined,
 }
 
-let content_length = get_terminal().textLength;
-
-const CTRL_HANDLERS_WITH_DESCRIPTIONS = {
-    c: [FUN.keyboard_interrupt, "Kill long-running job"],
-    d: [COMMAND.exit, "Close terminal"],
-    l: [FUN.clear, "Clear terminal screen"],
-    e: [FUN.spawn, "Spawn new terminal"],
+const CTRL_HANDLERS = {
+    c: FUN.keyboard_interrupt,
+    d: COMMAND.exit,
+    l: FUN.clear,
+    e: FUN.spawn,
 };
-
-const add_to_controls = (html) => {
-    const text = document.createElement("p");
-    text.innerHTML = html;
-    document.getElementById("controls").appendChild(text);
-};
-
-const CTRL_HANDLERS = {};
-for (const [key, [func, desc]] of Object.entries(CTRL_HANDLERS_WITH_DESCRIPTIONS)) {
-    CTRL_HANDLERS[key] = func;
-    add_to_controls(`<kbd>Ctrl</kbd>+<kbd>${key.toUpperCase()}</kbd> - ${desc}`);
-}
-
-for (const [cmd, desc] of Object.entries(COMMAND_DESCRIPTIONS)) {
-    add_to_controls(`<samp>${cmd}</samp> - ${desc}`);
-}
 
 document.addEventListener("keydown", (e) => {
     if (!e.ctrlKey) return;
@@ -614,13 +535,12 @@ const handle_input = (e) =>
         FUN.prompt();
     }
     // backspace
-    else if (get_terminal().textLength < content_length && get_terminal().value.split(NL).at(-1) === SHELL.prompt)
+    else if (get_terminal().textLength < STATE.content_length && get_terminal().value.split(NL).at(-1) === SHELL.prompt)
     {
         get_terminal().value = get_terminal().value.split(NL).slice(0, -1).join(NL)+(get_terminal().value.indexOf(NL) > -1 ? NL : '');
         FUN.prompt();
     }
 
-    content_length = get_terminal()?.textLength;
     STATE.save();
 };
 
