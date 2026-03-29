@@ -198,6 +198,7 @@ const FUN = {
         STATE.save();
     },
     get_command_line: () => get_terminal().value.split(NL).at(-1).replace(SHELL.prompt + " ", ""),
+    get_prompt_end: () => get_terminal().value.lastIndexOf(SHELL.prompt) + SHELL.prompt.length + 1,
     maximize: () => {
         const w = get_window();
         w.style.width = "100%";
@@ -349,11 +350,10 @@ const COMMAND = {
         }
         else if (subcommand === 'volume')
         {
-            const volume = parseFloat(args.shift());
-            if (!Number.isNaN(volume))
-            {
-                PLAYER.volume = volume;
-            }
+            const raw = args.shift() ?? '';
+            const in_percent = raw.endsWith('%');
+            const volume = parseFloat(raw) / (in_percent ? 100 : 1);
+            if (!Number.isNaN(volume)) PLAYER.volume = volume;
             FUN.print(`${prefix} Volume: ${PLAYER.volume} (${PLAYER.volumeReal})`);
         }
         else if (subcommand === 'show')
@@ -579,8 +579,9 @@ document.addEventListener("keydown", (e) => {
 
 const handle_input = (e) =>
 {
-    // when insertion isn't done at the end of textarea
-    if (get_terminal().selectionStart != get_terminal().selectionEnd || get_terminal().selectionStart != get_terminal().value.length)
+    // when editing outside the command line or something is selected
+    if (get_terminal().selectionStart != get_terminal().selectionEnd
+        || get_terminal().selectionStart <= FUN.get_prompt_end())
     {
         STATE.reset();
         if (e.data)
@@ -636,7 +637,10 @@ const handle_keydown = (e) => {
     }
     else if (e.key === "ArrowLeft")
     {
-        e.preventDefault();
+        if (get_terminal().selectionStart <= FUN.get_prompt_end())
+        {
+            e.preventDefault();
+        }
     }
 };
 
