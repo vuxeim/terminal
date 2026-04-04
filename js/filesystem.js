@@ -36,11 +36,14 @@ const FS = {
                 },
             },
         },
-    }, 
+    },
 };
 
 SOURCE_FILES.forEach((full_path) => {
     const stack = full_path.split('/');
-    const node = stack.slice(0, -1).reduce((node, name) => (node[name] ??= {}, node[name]), __FILESYSTEM_SOURCE_OBJECT);
+    const node = stack.slice(0, -1).reduce((n, name) => {
+        n[name] ??= {};
+        return n[name];
+    }, __FILESYSTEM_SOURCE_OBJECT);
     node[stack.at(-1)] = `%source::${full_path}%`;
 });

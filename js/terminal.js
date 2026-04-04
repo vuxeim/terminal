@@ -1,3 +1,14 @@
+/* global
+    FS, SOURCE_FILES, // filesystem.js
+    NL, VER, COLORS, // constants.js
+    get_terminal, get_window, // main.js
+    SHELL, // shell.js
+    SPLASH, // splash.js
+    HISTORY, // history.js
+    COMMAND_DESCRIPTIONS, // controls.js
+    PLAYER, // music.js
+ */
+
 class DYN
 {
     /* Stores dynamic data. Fetched asynchronously but without the need for async/await. */
@@ -7,12 +18,12 @@ class DYN
 
     static {
         SOURCE_FILES.forEach((file) => {
-            fetch(file).then(r => r.text()).then(t => this.SOURCE[file] = t);
+            fetch(file).then(r => r.text()).then(t => { this.SOURCE[file] = t; });
         });
 
         this.INFO.ip = "127.0.0.1";
         if (!["localhost", "127.0.0.1"].includes(window.location.hostname))
-            fetch('/api/ip').then(r => r.text()).then(t => this.INFO.ip = t.trim());
+            fetch('/api/ip').then(r => r.text()).then(t => { this.INFO.ip = t.trim(); });
         this.INFO.useragent = navigator.userAgent;
         this.INFO.platform = navigator.platform;
         this.INFO.language = navigator.language;
@@ -176,7 +187,7 @@ const FUN = {
     commands_list: (delim=" ") => Object.keys(COMMAND).filter(Boolean).join(delim),
     aliases_list: (delim=" ") => Object.entries(ALIASES).map(([alias, cmd]) => `${alias}=${cmd}`).filter(Boolean).join(delim),
     content_of: (obj) => Object.entries(obj),
-    update_prompt: () => SHELL.prompt = `[${SHELL.user}@${SHELL.host} ${SHELL.path}] $ `,
+    update_prompt: () => { SHELL.prompt = `[${SHELL.user}@${SHELL.host} ${SHELL.path}] $ `; },
     keyboard_interrupt: () => {
         FUN.print("^C");
         if (SLEEP.sleeping)
@@ -233,7 +244,7 @@ const FUN = {
             date.toLocaleString(undefined, { hour: 'numeric', minute: 'numeric', hour12: false }),
         ].join(" ");
     },
-    is_dir: (node) => typeof node === 'object' && node != null,
+    is_dir: (node) => typeof node === 'object' && node !== null,
     get_node: (path) => {
         const parts = path.split('/').filter(Boolean);
         let node = FS['/'];
@@ -244,9 +255,9 @@ const FUN = {
         }
         return node ?? null;
     },
-}
+};
 
-let ALIASES = {};
+const ALIASES = {};
 
 const COMMAND = {
     help: ([cmd_name, ..._]) => {
@@ -401,8 +412,8 @@ const COMMAND = {
         const date = new Date(2020, 11, 24, 12, 30, 0);
 
         const node_content = FUN.content_of(node);
-        const directories = node_content.filter(([parent, child]) => FUN.is_dir(child)).sort();
-        const files = node_content.filter(([parent, child]) => !FUN.is_dir(child)).sort();
+        const directories = node_content.filter(([_parent, child]) => FUN.is_dir(child)).sort();
+        const files = node_content.filter(([_parent, child]) => !FUN.is_dir(child)).sort();
 
         for (const [name, content] of directories.concat(files)) {
             const size = FUN.is_dir(content) ? Object.keys(content).length : content.length;
@@ -495,7 +506,7 @@ const COMMAND = {
         ALIASES[new_name] = target;
         FUN.print(`${new_name} is now an alias of ${target}`);
     },
-}
+};
 
 const CTRL_HANDLERS = {
     c: FUN.keyboard_interrupt,
@@ -555,7 +566,6 @@ const handle_beforeinput = (e) =>
 
         FUN.prompt();
         TERMINAL.scroll_bottom();
-        return;
     }
 };
 

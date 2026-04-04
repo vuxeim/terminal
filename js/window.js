@@ -1,4 +1,9 @@
-let dragging = x = y = old_x = old_y = 0;
+/* global
+    get_window, // main.js
+*/
+let dragging = false;
+let old_x = 0;
+let old_y = 0;
 
 const drag = (e) => {
     if (!e.target.closest(".topbar"))
@@ -14,7 +19,7 @@ document.addEventListener("spawnterminal", () => {
     get_window().addEventListener('mousedown', drag);
 });
 
-document.addEventListener('mouseup', (e) => {
+document.addEventListener('mouseup', () => {
     dragging = false;
 });
 

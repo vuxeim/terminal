@@ -4,5 +4,5 @@ const SHELL = {
     path: "~",
     group: "group",
     prompt: undefined,
-}
+};
 
