@@ -263,35 +263,31 @@ const COMMAND = {
     music: ([subcommand, ...args]) => {
         const prefix = "~ᴘʟᴀʏᴇʀ~";
 
-        if (subcommand === 'load')
-        {
-            let name = args.shift();
-            PLAYER.load(name);
-            FUN.print(`${prefix} Loaded: ${PLAYER.name}`);
-        }
-        else if (subcommand === 'play')
+        if (subcommand === 'play')
         {
             PLAYER.play();
-            FUN.print(`${prefix} Playing: ${PLAYER.name}`);
+            FUN.print(`${prefix} Playing: ${PLAYER.pretty_name}`);
         }
         else if (subcommand === 'next')
         {
             PLAYER.next();
-            FUN.print(`${prefix} Playing: ${PLAYER.name}`);
+            const d = PLAYER.details;
+            FUN.print(`${prefix} (${d.index}/${d.playlist_length}) Now playing: ${PLAYER.pretty_name}`);
         }
         else if (subcommand === 'prev')
         {
             PLAYER.prev();
-            FUN.print(`${prefix} Playing: ${PLAYER.name}`);
+            const d = PLAYER.details;
+            FUN.print(`${prefix} (${d.index}/${d.playlist_length}) Now playing: ${PLAYER.pretty_name}`);
         }
         else if (subcommand === 'pause')
         {
             PLAYER.pause();
-            FUN.print(`${prefix} Paused: ${PLAYER.name}`);
+            FUN.print(`${prefix} Paused: ${PLAYER.pretty_name}`);
         }
         else if (subcommand === 'stop')
         {
-            const name = PLAYER.name;
+            const name = PLAYER.pretty_name;
             PLAYER.stop();
             FUN.print(`${prefix} Stopped: ${name}`);
         }
@@ -299,29 +295,45 @@ const COMMAND = {
         {
             const raw = args.shift() ?? '';
             const in_percent = raw.endsWith('%');
-            const volume = parseFloat(raw) / (in_percent ? 100 : 1);
             const is_relative = raw.startsWith('+') || raw.startsWith('-');
+            const value = parseFloat(raw);
+            let volume = value / (in_percent ? 100 : 1);
+            if (!in_percent && value > 1) volume /= 100;
             if (!Number.isNaN(volume))
                 PLAYER.volume = is_relative ? PLAYER.volume + volume : volume;
-            FUN.print(`${prefix} Volume: ${PLAYER.volume} (${PLAYER.volumeReal})`);
+            FUN.print(`${prefix} Volume: ${PLAYER.volume*100}%`);
+        }
+        else if (subcommand === 'info')
+        {
+            const d = PLAYER.details;
+            FUN.print(`(${d.index}/${d.playlist_length})`);
+            FUN.print(`Title: ${d.title}`);
+            FUN.print(`Artist: ${d.artist}`);
+            FUN.print(`Link: ${d.link}`);
+        }
+        else if (subcommand === 'playlist')
+        {
+            PLAYER.playlist.forEach((details) => {
+                FUN.print(`${details.index}. ${details.title} by ${details.artist}`);
+            });
         }
         else if (subcommand === 'show')
         {
             if (PLAYER.hidden)
             {
-                FUN.print("Shown!")
+                FUN.print("Shown!");
                 PLAYER.show();
             }
             else
-                FUN.print("Already shown...")
+                FUN.print("Already shown...");
         }
         else if (subcommand === 'hide')
         {
             if (PLAYER.hidden)
-                FUN.print("Already hidden...")
+                FUN.print("Already hidden...");
             else
             {
-                FUN.print("Hidden!")
+                FUN.print("Hidden!");
                 PLAYER.hide();
             }
         }
@@ -337,7 +349,6 @@ const COMMAND = {
         }
         else
         {
-            FUN.print('music load <name>');
             FUN.print('music play');
             FUN.print('music pause');
             FUN.print('music stop');
@@ -347,6 +358,8 @@ const COMMAND = {
             FUN.print('music show');
             FUN.print('music hide');
             FUN.print('music loop');
+            FUN.print('music info');
+            FUN.print('music playlist');
             FUN.print('music volume <0..1|n%>');
         }
     },

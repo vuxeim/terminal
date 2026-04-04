@@ -32,6 +32,10 @@ String.prototype.reversed = function() {
     return [...this].reverse().join("");
 };
 
+Object.prototype.stringify = function() {
+    return JSON.stringify(this);
+};
+
 const get_terminal = () => document.getElementById("terminal");
 const get_window = () => document.getElementById("window");
 
