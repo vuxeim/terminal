@@ -1,5 +1,5 @@
 /* global
-    FS, SOURCE_FILES, // filesystem.js
+    FS, set_fs_command_object, // filesystem.js
     NL, VER, COLORS, // constants.js
     get_terminal, get_window, // main.js
     SHELL, // shell.js
@@ -7,31 +7,9 @@
     HISTORY, // history.js
     COMMAND_DESCRIPTIONS, // controls.js
     PLAYER, // music.js
+    ParseError, parse_args, ExpansionError, expand_args, // parser.js
+    FONTMANAG, // fonts.js
  */
-
-class DYN
-{
-    /* Stores dynamic data. Fetched asynchronously but without the need for async/await. */
-
-    static SOURCE = {};
-    static INFO = {};
-
-    static {
-        SOURCE_FILES.forEach((file) => {
-            fetch(file).then(r => r.text()).then(t => { this.SOURCE[file] = t; });
-        });
-
-        this.INFO.ip = "127.0.0.1";
-        if (!["localhost", "127.0.0.1"].includes(window.location.hostname))
-            fetch('/api/ip').then(r => r.text()).then(t => { this.INFO.ip = t.trim(); });
-        this.INFO.useragent = navigator.userAgent;
-        this.INFO.platform = navigator.platform;
-        this.INFO.language = navigator.language;
-        this.INFO.resolution = `${screen.width}x${screen.height}`;
-        this.INFO.colordepth = screen.colorDepth;
-        this.INFO.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    }
-}
 
 class SLEEP
 {
@@ -97,6 +75,26 @@ class TERMINAL
         return t.selectionStart !== t.selectionEnd;
     }
 
+    static get font_weight() {
+        const normal = 400;
+        const t = get_terminal();
+        t.style.fontWeight ||= normal.toString();
+        return t.style.fontWeight;
+    }
+
+    static set font_weight(weight) {
+        get_terminal().style.fontWeight = weight.toString();
+    }
+
+    static get font() {
+        const family = get_terminal().style.fontFamily || "Default";
+        return family.split(',').at(0).unquote();
+    }
+
+    static set font(name) {
+        get_terminal().style.fontFamily = `"${name}", monospace`;
+    }
+
     static append(text) {
         get_terminal().value += text;
     }
@@ -155,7 +153,6 @@ const FUN = {
     get_random_ascii: () => SPLASH[Math.floor(Math.random()*SPLASH.length)],
     load: () => {
         SHELL.path = '~';
-        FUN.update_prompt();
         FUN.clear();
         FUN.print_motd();
         FUN.prompt();
@@ -168,7 +165,7 @@ const FUN = {
     },
     get_version: () => VER,
     set_command_line: TERMINAL.set_command_line,
-    get_command_line: () => TERMINAL.data.split(NL).at(-1).replace(SHELL.prompt, ""),
+    get_command_line: () => TERMINAL.data.split(SHELL.prompt).at(-1),
     get_command_line_start: () => TERMINAL.data.lastIndexOf(SHELL.prompt) + SHELL.prompt.length,
     maximize: () => {
         const w = get_window();
@@ -186,8 +183,6 @@ const FUN = {
     prompt: () => { if (TERMINAL.exists) TERMINAL.append(SHELL.prompt); },
     commands_list: (delim=" ") => Object.keys(COMMAND).filter(Boolean).join(delim),
     aliases_list: (delim=" ") => Object.entries(ALIASES).map(([alias, cmd]) => `${alias}=${cmd}`).filter(Boolean).join(delim),
-    content_of: (obj) => Object.entries(obj),
-    update_prompt: () => { SHELL.prompt = `[${SHELL.user}@${SHELL.host} ${SHELL.path}] $ `; },
     keyboard_interrupt: () => {
         FUN.print("^C");
         if (SLEEP.sleeping)
@@ -199,31 +194,6 @@ const FUN = {
         get_window().remove();
         HISTORY.clear();
     },
-    replace_special_content: (content) => {
-        if ((content.split('%').length !== 3) || !content.startsWith('%') || !content.endsWith('%'))
-            return content;
-
-        const key = content.slice(1, -1);
-        const [type, value] = key.split('::');
-
-        if (type === 'info') return DYN.INFO[value] ?? content;
-        if (type === 'source') return DYN.SOURCE[value] ?? content;
-
-        return content;
-    },
-    resolve_path: (path) => {
-        if (path) path = path.replace(/^~/, '/home/' + SHELL.user);
-        const cwd = SHELL.path.startsWith('/') ? SHELL.path : SHELL.path.replace('~', '/home/' + SHELL.user);
-        const base = (!path || !path.startsWith('/')) ? cwd.split('/').filter(Boolean) : [];
-        const parts = [...base, ...(path || '').split('/').filter(Boolean)];
-        const resolved = [];
-        for (const part of parts) {
-            if (part === '.') continue;
-            else if (part === '..') resolved.pop();
-            else resolved.push(part);
-        }
-        return '/' + resolved.join('/');
-    },
     clear: TERMINAL.clear,
     spawn: () => {
         if (TERMINAL.exists)
@@ -231,29 +201,16 @@ const FUN = {
         TERMINAL.respawn();
         FUN.load();
     },
-    exec: (text="") => {
-        const [name, ...args] = text.split(" ");
-        const cmd_name = Object.keys(ALIASES).includes(name) ? ALIASES[name] : name;
-        COMMAND[cmd_name](args);
-    },
     date_fmt: (date) => {
+        const year_ago = new Date();
+        year_ago.setFullYear(year_ago.getFullYear()-1);
         return [
             date.toLocaleString(undefined, { month: 'short' }),
-            date.getDate(),
-            date.getFullYear(),
-            date.toLocaleString(undefined, { hour: 'numeric', minute: 'numeric', hour12: false }),
+            date.getDate().toString().padStart(2, " "),
+            (year_ago > date)
+                ? date.getFullYear().toString().padStart(5, " ")
+                : date.toLocaleString(undefined, { hour: 'numeric', minute: 'numeric', hour12: false }),
         ].join(" ");
-    },
-    is_dir: (node) => typeof node === 'object' && node !== null,
-    get_node: (path) => {
-        const parts = path.split('/').filter(Boolean);
-        let node = FS['/'];
-        for (const part of parts)
-        {
-            if (!FUN.is_dir(node)) return null;
-            node = node[part];
-        }
-        return node ?? null;
     },
 };
 
@@ -270,6 +227,44 @@ const COMMAND = {
         }
         else
             FUN.print(COMMAND_DESCRIPTIONS[cmd_name] ?? `help: no help for: ${cmd_name}`);
+    },
+    args: ([...args]) => args.forEach(arg => FUN.print(arg)),
+    font: ([subcommand, ...args]) => {
+        if (subcommand === 'weight')
+        {
+            const raw = args.shift() ?? '';
+            const value = parseInt(raw);
+            if (!Number.isNaN(value))
+                TERMINAL.font_weight = value.toString();
+            FUN.print(`Font weight: ${TERMINAL.font_weight}`);
+        }
+        else if (subcommand === 'face')
+        {
+            const name = args.shift();
+            if (!FONTMANAG.exist(name))
+            {
+                if (name)
+                {
+                    FUN.print(`Unknown font: ${name}`);
+                }
+                else
+                {
+                    FUN.print(`Font: ${TERMINAL.font}`);
+                }
+                FUN.print('Available:');
+                FONTMANAG.names.forEach(f => FUN.print(f));
+            }
+            else
+            {
+                FONTMANAG.load_if(name);
+                TERMINAL.font = name;
+            }
+        }
+        else
+        {
+            FUN.print('font weight');
+            FUN.print('font face');
+        }
     },
     music: ([subcommand, ...args]) => {
         const prefix = "~ᴘʟᴀʏᴇʀ~";
@@ -321,6 +316,7 @@ const COMMAND = {
             FUN.print(`Title: ${d.title}`);
             FUN.print(`Artist: ${d.artist}`);
             FUN.print(`Link: ${d.link}`);
+            FUN.print(`Size: ${d.size}`);
         }
         else if (subcommand === 'playlist')
         {
@@ -402,79 +398,108 @@ const COMMAND = {
         const t = get_terminal();
         [t.style.color, t.style.backgroundColor] = [COLORS[fore], COLORS[back]];
     },
-    pwd: () => FUN.print(FUN.resolve_path(SHELL.path)),
-    ls: ([path, ..._]) => {
-        path = FUN.resolve_path(path);
-        const node = FUN.get_node(path);
-        if (node === null) return FUN.print(`ls: cannot access '${path}': No such file or directory`);
-        const entries = Object.keys(node);
-        FUN.print(`total ${entries.length}`);
-        const date = new Date(2020, 11, 24, 12, 30, 0);
+    pwd: () => FUN.print(FS.resolve_path(SHELL, SHELL.path)),
+    ls: ([...paths]) =>
+    {
+        let path = paths.shift();
+        path = FS.resolve_path(SHELL, path);
+        const node = FS.get_node(path);
+        if (node === null)
+        {
+            FUN.print(`ls: cannot access '${path}': No such file or directory`);
+            return;
+        }
 
-        const node_content = FUN.content_of(node);
-        const directories = node_content.filter(([_parent, child]) => FUN.is_dir(child)).sort();
-        const files = node_content.filter(([_parent, child]) => !FUN.is_dir(child)).sort();
+        let nodes;
+        if (FS.is_dir(node))
+        {
+            const entries = Object.keys(node);
+            FUN.print(`total ${entries.length}`);
 
-        for (const [name, content] of directories.concat(files)) {
-            const size = FUN.is_dir(content) ? Object.keys(content).length : content.length;
-            const size_fmt = ("" + size).padStart(2, " ");
-            const mode = FUN.is_dir(content) ? 'drwxr-xr-x' : '-rw-r--r--';
+            const node_content = FS.list_dir(node);
+            const directories = node_content.filter(([_parent, child]) => FS.is_dir(child)).sort();
+            const files = node_content.filter(([_parent, child]) => !FS.is_dir(child)).sort();
+            nodes = directories.concat(files);
+        }
+        else
+        {
+            nodes = [[node.name, node]];
+        }
+
+        const lengths = nodes.map(([_name, content]) => {
+            if (FS.is_dir(content))
+                return Object.keys(content).length.toString().length;
+            else
+                return content.size.numfmt().length;
+        });
+
+        const pad = Math.max(...lengths) + 1;
+
+        const date = new Date(2024, 11, 24, 12, 30, 0);
+
+        for (const [name, content] of nodes) {
+            const size = FS.is_dir(content) ? Object.keys(content).length : content.size;
+            const size_fmt = FS.is_dir(content) ? size.toString().padStart(pad) : size.numfmt({ pad: pad });
+            const mode = FS.is_dir(content) ? 'drwxr-xr-x' : '-rw-r--r--';
             const date_fmt = FUN.date_fmt(date);
             FUN.print(`${mode} ${SHELL.user} ${SHELL.group} ${size_fmt} ${date_fmt} ${name}`);
         }
+
+        if (paths.length) COMMAND.ls(paths);
     },
-    cat: ([path, ...rest]) => {
+    cat: ([...paths]) => {
+        let path = paths.shift();
         if (!path) return FUN.print('cat: missing operand');
 
-        if (path.endsWith('*') && (path.slice(-2, -1) === '/' || path.length === 1))
-        {
-            const dir = path.slice(0, -1) || './';
-            const node = FUN.get_node(FUN.resolve_path(dir));
-            if (!node) return;
-            const files = Object.keys(node).filter(k => !FUN.is_dir(node[k])).map((f) => dir + f);
-            path = files.shift();
-            rest = [...files, ...rest];
-        }
-        path = FUN.resolve_path(path);
+        path = FS.resolve_path(SHELL, path);
 
-        const node = FUN.get_node(path);
+        const node = FS.get_node(path);
         if (node === null)
         {
             FUN.print(`cat: ${path}: No such file or directory`);
         }
-        else if (FUN.is_dir(node))
+        else if (FS.is_dir(node))
         {
             FUN.print(`cat: ${path}: Is a directory`);
         }
         else
         {
             // the actual print
-            FUN.print(FUN.replace_special_content(node));
+            const content = node.content.replaceLast(NL);
+            if (content.length > 0)
+            {
+                FUN.print(content);
+            }
         }
-        // recursively cat next path
-        if (rest.length) COMMAND.cat(rest);
+
+        if (paths.length) COMMAND.cat(paths);
     },
-    su: ([name, ..._]) => (SHELL.user = (name || SHELL.user)) && FUN.update_prompt(),
-    hostname: ([name, ..._]) => (SHELL.host = (name || SHELL.host)) && FUN.update_prompt(),
+    su: ([name, ..._]) => {
+        if (name)
+            SHELL.user = name;
+    },
+    hostname: ([name, ..._]) => {
+        if (name)
+            SHELL.host = name;
+    },
     "?": () => FUN.print('Do you need help? Just type `help`'),
     cd: ([path, ..._]) => {
         if (!path) {
             SHELL.path = '~';
-            return FUN.update_prompt();
+            return;
         }
-        path = FUN.resolve_path(path);
-        const node = FUN.get_node(path);
+        path = FS.resolve_path(SHELL, path);
+        const node = FS.get_node(path);
         if (node === null) {
             return FUN.print(`cd: no such file or directory: ${path}`);
         }
-        if (!FUN.is_dir(node)) {
-            return FUN.print(`cd: not a directory: ${path}`);
+        if (!FS.is_dir(node)) {
+            return FS.print(`cd: not a directory: ${path}`);
         }
-        const home = `/home/${SHELL.user}`;
+        const home = FS.resolve_path(SHELL, '~');
         SHELL.path = path.startsWith(home) ? path.replace(home, '~') : path;
-        FUN.update_prompt();
     },
-    echo: ([...args]) => (FUN.print(args.join(" "))),
+    echo: ([...args]) => FUN.print(args.join(" ")),
     exit: FUN.exit,
     sleep: ([duration, ...args]) => {
 
@@ -508,6 +533,8 @@ const COMMAND = {
     },
 };
 
+Object.keys(COMMAND).forEach(cmd => set_fs_command_object('commands/'+cmd, COMMAND_DESCRIPTIONS[cmd] ?? ""));
+
 const CTRL_HANDLERS = {
     c: FUN.keyboard_interrupt,
     d: FUN.exit,
@@ -529,8 +556,8 @@ document.addEventListener("keydown", (e) => {
 const handle_beforeinput = (e) =>
 {
     const before_command_line = TERMINAL.cursor_position < FUN.get_command_line_start();
+    const after_command_line = !before_command_line;
     const at_command_line_start = TERMINAL.cursor_position === FUN.get_command_line_start();
-    const at_command_line_end = TERMINAL.cursor_position === TERMINAL.content_length;
     const is_backspace = e.inputType === 'deleteContentBackward';
     const is_enter = e.inputType === 'insertLineBreak';
     const is_printable = !!e.data;
@@ -543,23 +570,56 @@ const handle_beforeinput = (e) =>
     }
 
     // enter (new line) at the end of command line
-    if (is_enter && at_command_line_end)
+    if (is_enter && after_command_line)
     {
         e.preventDefault();
         const command_line = FUN.get_command_line();
+        HISTORY.push(command_line);
         TERMINAL.append(NL);
 
-        const [cmd, ...params] = command_line.trim().split(" ").filter(Boolean);
+        let args;
+        try
+        {
+            args = parse_args(command_line);
+        }
+        catch (err)
+        {
+            const absolute = SHELL.prompt.length;
+
+            if (err.type === ParseError.UNCLOSED_QUOTE)
+            {
+                FUN.print((" ".repeat(absolute+err.from)) + "^" + (" ".repeat(err.to-err.from-1)) + "^");
+            }
+            else if (err.type === ParseError.TRAILING_BACKSLASH)
+            {
+                const index = err.index;
+                FUN.print((" ".repeat(absolute+index)) + "^");
+            }
+
+            FUN.print(`shell: ${err.message}`);
+        }
+
+        let cmd;
+        try
+        {
+            [cmd, ...args] = expand_args(SHELL, args);
+        }
+        catch (err)
+        {
+            if (err.type === ExpansionError.NO_MATCHES)
+            {
+                FUN.print(`shell: ${err.message}`);
+            }
+        }
 
         if (cmd)
         {
             const cmd_lower = cmd.toLowerCase();
-            HISTORY.push([cmd, ...params].join(" "));
 
             if (Object.keys(COMMAND).includes(cmd_lower))
-                COMMAND[cmd_lower](params);
+                COMMAND[cmd_lower](args);
             else if (Object.keys(ALIASES).includes(cmd_lower))
-                FUN.exec(`${ALIASES[cmd_lower]} ${params.join(" ")}`);
+                COMMAND[ALIASES[cmd_lower]](args);
             else
                 FUN.print(`shell: command not found: ${cmd}`);
         }

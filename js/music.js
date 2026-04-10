@@ -1,9 +1,13 @@
-const __MUSIC_FILES = [
+/* global
+    File, set_fs_music_object // filesystem.js
+*/
+
+const MUSIC_FILES = [
     'fovqDOmdgFQ.opus',
     'BQWc_MgcT0A.opus',
     '4X7ZvpwBiKA.opus',
     'DwVTLrg-2-0.opus',
-    'j4jtIDaeaWI.opus',
+    'oROoI-bYgGQ.opus',
 ];
 
 const __MUSIC_DECODER = new TextDecoder('utf-8');
@@ -15,11 +19,13 @@ class Song
     #id;
     #artist;
     #filename;
+    #size;
 
     get url() { return this.#filename; }
     get title() { return this.#title; }
     get artist() { return this.#artist; }
     get link() { return "https://youtu.be/" + this.#id; }
+    get size() { return this.#size.numfmt(); }
 
     #fetch() {
         const parse = (buffer) => {
@@ -60,6 +66,8 @@ class Song
 
             this.#artist = comments.artist;
             this.#title = comments.title;
+            const file = new File({ filename: this.#filename.replace(PLAYER.DIR, ''), path: this.#filename, binary: true, size: this.#size, meta_content: this.#filename, content: bytes });
+            set_fs_music_object(this.#filename, file);
         };
 
         const handle_response = (response) => {
@@ -74,9 +82,14 @@ class Song
 
             if (!is_partial)
             {
-                console.warn(__MUSIC_HEADER.stringify() + " header is not supported. Entire file will be downloaded!");
+                // python http.server doesn't support range header, although apache does
+                console.warn(`Header ${__MUSIC_HEADER.stringify()} is not supported. Entire file will be downloaded!`);
             }
 
+            const headers = response.headers;
+            const content_range = headers.get('content-range');
+            const content_length = headers.get('content-length');
+            this.#size = parseInt((content_range === null) ? content_length : content_range.split('/').at(-1));
             return response.arrayBuffer();
         };
 
@@ -96,7 +109,7 @@ class Song
 
 class PLAYER
 {
-    static #DIR = 'music/';
+    static DIR = 'music/';
     static #GAMMA = 3;
     static #ID = 'music-player';
     static #index = null;
@@ -113,7 +126,7 @@ class PLAYER
         this.#audio.addEventListener('ended', () => {
             if (!this.loop && this.#autonext) this.next();
         });
-        __MUSIC_FILES.forEach(f => this.#playlist.push(new Song(this.#DIR + f)));
+        MUSIC_FILES.forEach(f => this.#playlist.push(new Song(this.DIR + f)));
     }
 
     static get playlist_length() {
@@ -149,31 +162,24 @@ class PLAYER
     }
 
     static get details() {
-        const d = {
+        return this.playlist[this.#index] ?? {
             playlist_length: this.playlist_length,
+            title: "-",
+            artist: "-",
             index: this.#index + 1,
-            link: "",
-            title: "",
-            artist: "",
-        };
-
-        const song = this.#playlist[this.#index];
-        if (song)
-        {
-            d.link = song.link;
-            d.title = song.title;
-            d.artist = song.artist;
-        }
-
-        return d;
+            link: "-",
+            size: "0",
+        } ;
     }
 
     static get playlist() {
         return this.#playlist.map((song) => ({
+            playlist_length: this.playlist_length,
             title: song.title,
             artist: song.artist,
             index: this.#playlist.indexOf(song) + 1,
             link: song.link,
+            size: song.size,
         }));
     }
 
