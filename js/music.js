@@ -11,7 +11,8 @@ const MUSIC_FILES = [
 ];
 
 const __MUSIC_DECODER = new TextDecoder('utf-8');
-const __MUSIC_HEADER = { Range: "bytes=0-2048" };
+const __MUSIC_HEADER_OPUS_HEAD = { Range: "bytes=0-2048" };
+const __MUSIC_HEADER_OPUS_TAIL = { Range: "bytes=-64" };
 
 class Song
 {
@@ -20,15 +21,17 @@ class Song
     #artist;
     #filename;
     #size;
+    #duration;
 
     get url() { return this.#filename; }
     get title() { return this.#title; }
     get artist() { return this.#artist; }
     get link() { return "https://youtu.be/" + this.#id; }
     get size() { return this.#size.numfmt(); }
+    get duration() { return this.#duration; } // in seconds
 
     #fetch() {
-        const parse = (buffer) => {
+        const parse_opus_head = (buffer) => {
             if (!buffer)
             {
                 console.error('No buffer');
@@ -70,6 +73,27 @@ class Song
             set_fs_music_object(this.#filename, file);
         };
 
+        const parse_opus_tail = (buffer) => {
+            if (!buffer)
+            {
+                console.error('No buffer');
+                return;
+            }
+
+            const view = new DataView(buffer);
+            for (let i = buffer.byteLength - 27; i >= 0; --i)
+            {
+                if (view.getUint32(i, false) === 0x4f676753) // 'OggS' in hex
+                {
+                    const lo = view.getUint32(i + 6, true);
+                    const hi = view.getUint32(i + 10, true);
+                    const granule = hi * 2**32 + lo;
+                    this.#duration = granule / 48000;
+                    break;
+                }
+            }
+        };
+
         const handle_response = (response) => {
             const code = response.status;
             const is_ok = code === 200;
@@ -83,22 +107,30 @@ class Song
             if (!is_partial)
             {
                 // python http.server doesn't support range header, although apache does
-                console.warn(`Header ${__MUSIC_HEADER.stringify()} is not supported. Entire file will be downloaded!`);
+                console.warn(`Header ${__MUSIC_HEADER_OPUS_HEAD.stringify()} is not supported. Entire file will be downloaded!`);
             }
 
             const headers = response.headers;
             const content_range = headers.get('content-range');
             const content_length = headers.get('content-length');
-            this.#size = parseInt((content_range === null) ? content_length : content_range.split('/').at(-1));
+            if (this.#size == null)
+            {
+                this.#size = parseInt((content_range === null) ? content_length : content_range.split('/').at(-1));
+            }
             return response.arrayBuffer();
         };
 
-        fetch(this.#filename, { headers: __MUSIC_HEADER })
+        fetch(this.#filename, { headers: __MUSIC_HEADER_OPUS_HEAD })
             .then(handle_response)
-            .then(parse);
+            .then(parse_opus_head);
+
+        fetch(this.#filename, { headers: __MUSIC_HEADER_OPUS_TAIL })
+            .then(handle_response)
+            .then(parse_opus_tail);
     }
 
     constructor(filename) {
+        this.#duration = 0;
         this.#filename = filename;
         const id = filename.split('/').at(-1).split('.').at(0);
         this.#id = id;
@@ -169,7 +201,8 @@ class PLAYER
             index: this.#index + 1,
             link: "-",
             size: "0",
-        } ;
+            duration: 0,
+        };
     }
 
     static get playlist() {
@@ -180,6 +213,7 @@ class PLAYER
             index: this.#playlist.indexOf(song) + 1,
             link: song.link,
             size: song.size,
+            duration: song.duration,
         }));
     }
 

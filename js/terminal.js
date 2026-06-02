@@ -1,6 +1,6 @@
 /* global
     FS, set_fs_command_object, // filesystem.js
-    NL, VER, COLORS, // constants.js
+    NL, VERSION, CODENAME, COLORS, // constants.js
     get_terminal, get_window, // main.js
     SHELL, // shell.js
     SPLASH, // splash.js
@@ -155,15 +155,84 @@ const FUN = {
         SHELL.path = '~';
         FUN.clear();
         FUN.print_motd();
+        FUN.source_shellrc();
         FUN.prompt();
         TERMINAL.focus();
+    },
+    execute: (line) => {
+        let args;
+        try
+        {
+            args = parse_args(line);
+        }
+        catch (err)
+        {
+            const absolute = SHELL.prompt.length;
+
+            if (err.type === ParseError.UNCLOSED_QUOTE)
+            {
+                FUN.print((" ".repeat(absolute+err.from)) + "^" + (" ".repeat(err.to-err.from-1)) + "^");
+            }
+            else if (err.type === ParseError.TRAILING_BACKSLASH)
+            {
+                const index = err.index;
+                FUN.print((" ".repeat(absolute+index)) + "^");
+            }
+
+            FUN.print(`shell: ${err.message}`);
+        }
+
+        let cmd;
+        try
+        {
+            [cmd, ...args] = expand_args(SHELL, args);
+        }
+        catch (err)
+        {
+            if (err.type === ExpansionError.NO_MATCHES)
+            {
+                FUN.print(`shell: ${err.message}`);
+            }
+        }
+
+        if (cmd)
+        {
+            const cmd_lower = cmd.toLowerCase();
+
+            if (Object.keys(COMMAND).includes(cmd_lower))
+                COMMAND[cmd_lower](args);
+            else if (Object.keys(ALIASES).includes(cmd_lower))
+                COMMAND[ALIASES[cmd_lower]](args);
+            else
+                FUN.print(`shell: command not found: ${cmd}`);
+        }
+    },
+    source_shellrc: () => {
+        const path = FS.resolve_path(SHELL, '~/.shellrc');
+
+        if (!FS.exists(path))
+        {
+            return;
+        }
+
+        const lines = FS.get_node(path).content.split(NL).filter(Boolean);
+
+        for (const line of lines) {
+
+            if (line.startsWith('#'))
+            {
+                continue;
+            }
+
+            FUN.execute(line);
+        }
     },
     print_motd: () => {
         const elements = [MOTD, FUN.get_random_ascii(), FUN.get_version()];
         const string = elements.join(NL);
         FUN.print(string);
     },
-    get_version: () => VER,
+    get_version: () => `${VERSION}-${CODENAME}`,
     set_command_line: TERMINAL.set_command_line,
     get_command_line: () => TERMINAL.data.split(SHELL.prompt).at(-1),
     get_command_line_start: () => TERMINAL.data.lastIndexOf(SHELL.prompt) + SHELL.prompt.length,
@@ -181,7 +250,6 @@ const FUN = {
     },
     print: (str="") => TERMINAL.append(str+NL),
     prompt: () => { if (TERMINAL.exists) TERMINAL.append(SHELL.prompt); },
-    commands_list: (delim=" ") => Object.keys(COMMAND).filter(Boolean).join(delim),
     aliases_list: (delim=" ") => Object.entries(ALIASES).map(([alias, cmd]) => `${alias}=${cmd}`).filter(Boolean).join(delim),
     keyboard_interrupt: () => {
         FUN.print("^C");
@@ -221,9 +289,20 @@ const COMMAND = {
         if (!cmd_name)
         {
             const aliases = Object.entries(ALIASES).map(([alias, cmd]) => `${alias}=${cmd}`).join(" ");
+            const commands_list = Object.keys(COMMAND).filter(Boolean);
+            const commands = '    ' + commands_list.map((cmd, i) => (i % 5 === 4) ? cmd + NL + '    ' : cmd + ' ').join('').trimEnd();
+            FUN.print();
+            FUN.print(`Available commands:${NL}${commands}`);
+            FUN.print();
             FUN.print(`Usage: help <command name>`);
-            FUN.print(`Available commands:${NL}${FUN.commands_list()}`);
-            FUN.print(`Aliases: ${aliases ? NL + aliases : 'none'}`);
+            FUN.print();
+            FUN.print('Switch to squareish font:');
+            FUN.print('    `font face Monocraft`');
+            FUN.print('Play some music:');
+            FUN.print('    `music play`');
+            FUN.print();
+            // FUN.print(`Aliases: ${aliases ? NL + aliases : 'none'}`);
+            // FUN.print();
         }
         else
             FUN.print(COMMAND_DESCRIPTIONS[cmd_name] ?? `help: no help for: ${cmd_name}`);
@@ -235,30 +314,31 @@ const COMMAND = {
             const raw = args.shift() ?? '';
             const value = parseInt(raw);
             if (!Number.isNaN(value))
+            {
                 TERMINAL.font_weight = value.toString();
+                return;
+            }
             FUN.print(`Font weight: ${TERMINAL.font_weight}`);
         }
         else if (subcommand === 'face')
         {
             const name = args.shift();
-            if (!FONTMANAG.exist(name))
+            if (!name)
             {
-                if (name)
-                {
-                    FUN.print(`Unknown font: ${name}`);
-                }
-                else
-                {
-                    FUN.print(`Font: ${TERMINAL.font}`);
-                }
+                FUN.print(`Font: ${TERMINAL.font}`);
                 FUN.print('Available:');
                 FONTMANAG.names.forEach(f => FUN.print(f));
+                return;
             }
-            else
+            const font_name = FONTMANAG.find_font(name);
+            console.debug(font_name);
+            if (!font_name)
             {
-                FONTMANAG.load_if(name);
-                TERMINAL.font = name;
+                FUN.print(`Could not find ${name}`);
+                return;
             }
+            FONTMANAG.load_if(font_name);
+            TERMINAL.font = font_name;
         }
         else
         {
@@ -312,16 +392,17 @@ const COMMAND = {
         else if (subcommand === 'info')
         {
             const d = PLAYER.details;
-            FUN.print(`(${d.index}/${d.playlist_length})`);
+            FUN.print(`Position: (${d.index}/${d.playlist_length})`);
             FUN.print(`Title: ${d.title}`);
             FUN.print(`Artist: ${d.artist}`);
+            FUN.print(`Duration: ${d.duration.toMMSS()}`);
             FUN.print(`Link: ${d.link}`);
             FUN.print(`Size: ${d.size}`);
         }
         else if (subcommand === 'playlist')
         {
-            PLAYER.playlist.forEach((details) => {
-                FUN.print(`${details.index}. ${details.title} by ${details.artist}`);
+            PLAYER.playlist.forEach((d) => {
+                FUN.print(`${d.index}. ${d.title} by ${d.artist} (${d.duration.toMMSS()})`);
             });
         }
         else if (subcommand === 'show')
@@ -576,54 +657,7 @@ const handle_beforeinput = (e) =>
         const command_line = FUN.get_command_line();
         HISTORY.push(command_line);
         TERMINAL.append(NL);
-
-        let args;
-        try
-        {
-            args = parse_args(command_line);
-        }
-        catch (err)
-        {
-            const absolute = SHELL.prompt.length;
-
-            if (err.type === ParseError.UNCLOSED_QUOTE)
-            {
-                FUN.print((" ".repeat(absolute+err.from)) + "^" + (" ".repeat(err.to-err.from-1)) + "^");
-            }
-            else if (err.type === ParseError.TRAILING_BACKSLASH)
-            {
-                const index = err.index;
-                FUN.print((" ".repeat(absolute+index)) + "^");
-            }
-
-            FUN.print(`shell: ${err.message}`);
-        }
-
-        let cmd;
-        try
-        {
-            [cmd, ...args] = expand_args(SHELL, args);
-        }
-        catch (err)
-        {
-            if (err.type === ExpansionError.NO_MATCHES)
-            {
-                FUN.print(`shell: ${err.message}`);
-            }
-        }
-
-        if (cmd)
-        {
-            const cmd_lower = cmd.toLowerCase();
-
-            if (Object.keys(COMMAND).includes(cmd_lower))
-                COMMAND[cmd_lower](args);
-            else if (Object.keys(ALIASES).includes(cmd_lower))
-                COMMAND[ALIASES[cmd_lower]](args);
-            else
-                FUN.print(`shell: command not found: ${cmd}`);
-        }
-
+        FUN.execute(command_line);
         FUN.prompt();
         TERMINAL.scroll_bottom();
     }
@@ -637,8 +671,7 @@ const handle_keydown = (e) => {
     }
     else if (e.key === "Tab")
     {
-        e.preventDefault();
-        // TODO tab completion
+        e.preventDefault(); // TODO tab completion
     }
     else if (e.key === "ArrowDown")
     {

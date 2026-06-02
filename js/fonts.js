@@ -4,9 +4,9 @@
 
 const FONTS = {
     'Anonymous Pro': 'anonymous-pro.woff2',
-    'Inconsolata': 'inconsolata.woff2',
     'JetBrains Mono': 'jetbrains-mono.woff2',
     'SourceCode Pro': 'source-code-pro.woff2',
+    'Monocraft': 'monocraft.woff2',
 };
 
 class FONTMANAG
@@ -41,6 +41,13 @@ class FONTMANAG
         const font = new FontFace(name, `url(${this.#DIR}/${location})`);
         font.load().then(f => document.fonts.add(f));
     }
+
+    static find_font = (query) => {
+        const normalize = (text) => text.toLowerCase().replace(/[\s-]/g, '');
+        const q = normalize(query);
+        const n = FONTMANAG.names;
+        return n.find(f => normalize(f).startsWith(q)) ?? n.find(f => normalize(f).includes(q)) ?? null;
+    };
 
     static
     {

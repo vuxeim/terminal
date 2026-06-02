@@ -8,6 +8,8 @@ const CTRL_HANDLERS_DESCRIPTIONS = {
 const COMMAND_DESCRIPTIONS = {
     help: "list available commands or get command help",
     su: "switch user",
+    args: "investigate command line arguments",
+    echo: "echo text back to the screen",
     hostname: "change hostname",
     ls: "list directory content",
     cat: "concatenate files content",

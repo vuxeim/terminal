@@ -80,6 +80,10 @@ Number.prototype.numfmt = function({ iec = false, precision = 1, pad = undefined
     return str;
 };
 
+Number.prototype.toMMSS = function() {
+    return new Date(this * 1000).toISOString().slice(11, 19).replace(/^00\:/, '');
+}
+
 const get_terminal = () => document.getElementById("terminal");
 const get_window = () => document.getElementById("window");
 

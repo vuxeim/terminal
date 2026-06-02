@@ -29,7 +29,7 @@ class File
     get size() { return this.#size; }
     get content() { return this.#content; }
     get name() { return this.#filename; }
-    get absolute_path() { return this.#path; } // TODO: fix so that it this.#path is always absolute
+    get absolute_path() { return this.#path; } // TODO: fix so that this.#path is always absolute
 
     static from_content(full_name, content) {
         const name = full_name.split('/').at(-1);
@@ -95,7 +95,7 @@ const __FS = {
                     'shell': "im using zsh",
                     'os': "im using arch btw",
                 },
-                '.shellrc': `color 6\nfont weight 800\n`,
+                '.shellrc': `color 6\nfont weight 800\n# font face Monocraft\n`,
                 'source': __SOURCE_OBJECT,
                 'music': __MUSIC_OBJECT,
                 'info': __INFO_OBJECT,
@@ -137,6 +137,8 @@ const FS = {
         }
         return node ?? null;
     },
+
+    exists: (path) => FS.get_node(path) !== null,
 
     list_dir: (node) => Object.entries(node),
 };
@@ -186,7 +188,7 @@ const __filesystem_traverse = (obj, path = "") => {
         {
             __filesystem_traverse(value, current_path);
         }
-        else
+        else if (value.instanceof(String))
         {
             obj[key] = File.from_content(current_path, value);
         }

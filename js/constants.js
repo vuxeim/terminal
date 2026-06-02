@@ -7,5 +7,6 @@ const COLORS = {
     c: "#E74856", d: "#B4009E", e: "#F9F1A5", f: "#F2F2F2",
 };
 
-const VER = '0.3-effess';
+const VERSION = '0.4.0';
+const CODENAME = 'craft';
 
