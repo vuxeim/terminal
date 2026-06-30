@@ -7,21 +7,23 @@ const CTRL_HANDLERS_DESCRIPTIONS = {
 
 const COMMAND_DESCRIPTIONS = {
     help: "list available commands or get command help",
-    su: "switch user",
-    args: "investigate command line arguments",
-    echo: "echo text back to the screen",
-    hostname: "change hostname",
+    music: "use music player",
+    font: "manipulate font properties",
+    history: "command history",
     ls: "list directory content",
     cat: "concatenate files content",
-    clear: "clear screen",
+    reverse: "turn reality around",
     color: "change fore and background colors",
-    ping: "simply respond",
+    echo: "echo text back to the screen",
+    clear: "clear screen",
     pwd: "print current working directory",
+    ping: "simply respond",
     sleep: "do nothing",
     alias: "manage command aliases",
     ascii: "print ascii art",
-    reverse: "turn reality around",
-    history: "command history",
+    args: "investigate command line arguments",
+    hostname: "change hostname",
+    su: "switch user",
 };
 
 const add_to_controls = (html) => {

@@ -95,7 +95,7 @@ const __FS = {
                     'shell': "im using zsh",
                     'os': "im using arch btw",
                 },
-                '.shellrc': `color 6\nfont weight 800\n# font face Monocraft\n`,
+                '.shellrc': `font weight 600\n#font face Monocraft\n`,
                 'source': __SOURCE_OBJECT,
                 'music': __MUSIC_OBJECT,
                 'info': __INFO_OBJECT,
@@ -173,6 +173,7 @@ __SOURCE_FILES.forEach((file) =>
 Object.entries(__INFO_FILES).forEach(([file, text]) => __set_info_object(file, text));
 
 const hostname = window.location.hostname;
+// Do not make request in local environment
 if (!["localhost", "127.0.0.1"].includes(hostname) && !["lan", "local"].includes(hostname.split('.').at(-1)))
 {
     fetch('/api/ip')
@@ -180,7 +181,7 @@ if (!["localhost", "127.0.0.1"].includes(hostname) && !["lan", "local"].includes
         .then(t => __set_info_object('info/ip', t.trim()));
 }
 
-// Transform strings into simple files
+// Transform string objects into simple file objects
 const __filesystem_traverse = (obj, path = "") => {
     for (const [key, value] of Object.entries(obj)) {
         const current_path = key === '/' ? '' : `${path}/${key}`;
