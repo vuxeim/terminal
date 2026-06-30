@@ -14,6 +14,15 @@ Number.prototype.clamp = function(min, max) {
   return Math.min(Math.max(this, min), max);
 };
 
+Math.clamp = function(val, min, max) {
+    return val.clamp(min, max);
+}
+
+Math.roundDecimal = function(val, places) {
+    const order = 10 ** places;
+    return Math.round((val + Number.EPSILON) * order) / order;
+}
+
 String.prototype.replaceLast = function(what, replacement="") {
     const idx = this.lastIndexOf(what);
     if (idx === -1) return this.toString();

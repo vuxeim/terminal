@@ -378,17 +378,17 @@ const COMMAND = {
             PLAYER.stop();
             FUN.print(`${prefix} Stopped: ${name}`);
         }
-        else if (subcommand === 'volume')
+        else if (subcommand === 'volume' || subcommand === "vol")
         {
             const raw = args.shift() ?? '';
             const in_percent = raw.endsWith('%');
             const is_relative = raw.startsWith('+') || raw.startsWith('-');
             const value = parseFloat(raw);
             let volume = value / (in_percent ? 100 : 1);
-            if (!in_percent && value > 1) volume /= 100;
+            if (!in_percent && Math.abs(value) > 1) volume /= 100;
             if (!Number.isNaN(volume))
                 PLAYER.volume = is_relative ? PLAYER.volume + volume : volume;
-            FUN.print(`${prefix} Volume: ${PLAYER.volume*100}%`);
+            FUN.print(`${prefix} Volume: ${Math.roundDecimal(PLAYER.volume*100, 2)}%`);
         }
         else if (subcommand === 'info')
         {

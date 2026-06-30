@@ -236,7 +236,7 @@ class PLAYER
     }
 
     static set volume(volume) {
-        const new_volume = Math.min(1.0, this.#scaledVolume(volume));
+        const new_volume = Math.clamp(this.#scaledVolume(volume), 0.0, 1.0);
         this.#audio.volume = new_volume;
     }
 
